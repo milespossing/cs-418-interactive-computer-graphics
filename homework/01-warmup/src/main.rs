@@ -30,7 +30,7 @@ impl FromStr for Entry {
                     color,
                 })
             }
-            _ => panic!("Unrecognized"),
+            _ => Err(format!("Not a recognized command: {}", split[0])),
         }
     }
 }
@@ -75,7 +75,9 @@ impl FromStr for File {
         let entries: Vec<Entry> = strings
             .iter()
             .skip(1)
-            .map(|s| Entry::from_str(s).unwrap())
+            .map(|s| Entry::from_str(s))
+            .filter(|r| r.is_ok())
+            .map(|s| s.unwrap())
             .collect();
         Ok(File {
             width,
