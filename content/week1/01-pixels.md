@@ -19,7 +19,8 @@ If we were to use the center of the pixel to determine the color,
 we would have a couple of issues.
 
 ![aliasing](../images/aliasing.png)
-*Two examples of point-like pixels causing aliasing.
+
+*Two examples of point-like pixels causing aliasing.*
 
 Treating pixels as square regions mitigates these issues.
 

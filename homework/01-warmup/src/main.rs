@@ -22,8 +22,7 @@ impl FromStr for Entry {
                 b: u8::from_str(split[5]).unwrap(),
             }),
             "xyc" => {
-                let color =
-                    <[u8; 3]>::from_hex(split[3].split("#").collect::<Vec<&str>>()[1]).unwrap();
+                let color = <[u8; 3]>::from_hex(split[3].replace("#", "")).unwrap();
                 Ok(Entry::Xyc {
                     x: u32::from_str(split[1]).unwrap(),
                     y: u32::from_str(split[2]).unwrap(),
