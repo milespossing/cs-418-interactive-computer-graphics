@@ -1,18 +1,78 @@
+use std::fmt::Display;
+
 use nalgebra::SVector;
 
-pub type Xyzw = SVector<f32, 4>;
+// Vectorizes and Devectorizes a type before it is interpolated between instances.
+pub trait InterpolationConverter<T, U, const N: usize> {
+    // adds w correction and turns into a vector
+    fn to_vector(&self, data: T, width: U, height: U) -> SVector<U, N>;
+    fn to_fragment(&self, vec: &SVector<U, N>) -> Fragment;
+}
 
-pub type Rgb = SVector<f32, 3>;
+#[derive(Debug, Copy, Clone)]
+pub struct Vertex {
+    pub w: f32,
+    pub transform: [f32; 3],
+    pub rgba: [f32; 4],
+}
 
-pub type Vertex = SVector<f32, 7>;
+impl Vertex {
+    pub fn from_xyzw_rgba(xyzw: [f32; 4], rgba: [f32; 4]) -> Self {
+        Vertex {
+            w: xyzw[3],
+            transform: [xyzw[0], xyzw[1], xyzw[2]],
+            rgba,
+        }
+    }
+}
+
+impl PartialEq for Vertex {
+    fn eq(&self, other: &Self) -> bool {
+        self.w == other.w && self.transform == other.transform && self.rgba == other.rgba
+    }
+}
+
+pub struct VertexConverter;
+
+impl InterpolationConverter<Vertex, f32, 8> for VertexConverter {
+    fn to_vector(&self, data: Vertex, width: f32, height: f32) -> SVector<f32, 8> {
+        let x_map = ((data.transform[0] / data.w) + 1f32) * (width / 2f32);
+        let y_map = ((data.transform[1] / data.w) + 1f32) * (height / 2f32);
+        let w_map = 1f32 / data.w;
+        SVector::from_vec(vec![
+            w_map,
+            x_map,
+            y_map,
+            data.transform[2],
+            data.rgba[0] * w_map,
+            data.rgba[1] * w_map,
+            data.rgba[2] * w_map,
+            data.rgba[3] * w_map,
+        ])
+    }
+
+    fn to_fragment(&self, vec: &SVector<f32, 8>) -> Fragment {
+        let w_corr = vec[0];
+        // TODO: Might need to add some error checking here
+        let transform: SVector<u32, 3> = SVector::from_vec(vec![
+            f32::floor(vec[1]) as u32,
+            f32::floor(vec[2]) as u32,
+            f32::floor(vec[3]) as u32,
+        ]);
+
+        let color: SVector<f32, 4> =
+            SVector::from_vec(vec![vec[4], vec[5], vec[6], vec[7]]) / w_corr;
+        Fragment { transform, color }
+    }
+}
 
 pub type Triangle = [Vertex; 3];
 
 // An entry in the input file
 #[derive(Debug)]
 pub enum Entry {
-    Xyzw(Xyzw),
-    Rgb(Rgb),
+    Xyzw([f32; 4]),
+    Rgb([f32; 3]),
     Triangle([i8; 3]),
 }
 
@@ -26,4 +86,33 @@ pub struct FileHeader {
 pub struct File {
     pub header: FileHeader,
     pub triangles: Vec<Triangle>,
+}
+
+#[derive(Clone)]
+pub struct Fragment {
+    pub transform: SVector<u32, 3>,
+    pub color: SVector<f32, 4>,
+}
+
+impl Fragment {
+    pub fn empty() -> Fragment {
+        Fragment {
+            transform: SVector::<u32, 3>::zeros(),
+            color: SVector::<f32, 4>::zeros(),
+        }
+    }
+
+    pub fn blend(a: &Fragment, b: &Fragment) -> Fragment {
+        Fragment {
+            transform: a.transform,
+            // using 'over' operator
+            color: b.color + (255f32 - b.color[3]) * a.color,
+        }
+    }
+}
+
+impl Display for Fragment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Transform:{}Color:{}", self.transform, self.color)
+    }
 }

@@ -88,8 +88,8 @@ pub fn perform_scanline<const D: usize>(
     p2: SVector<f32, D>,
     p3: SVector<f32, D>,
 ) -> Vec<SVector<f32, D>> {
-    let x_dimension = 0;
-    let y_dimension = 1;
+    let x_dimension = 1;
+    let y_dimension = 2;
     let mut s = [p1, p2, p3];
     s.sort_by(|a, b| a[y_dimension].total_cmp(&b[y_dimension]));
     let [s1, s2, s3] = s;
@@ -123,9 +123,9 @@ mod scanline_tests {
 
     #[test]
     fn correctly_performs_scanline_left_corner() {
-        let p1: SVector<f32, 3> = SVector::from_vec(vec![5f32, 9f32, 2f32]);
-        let p2: SVector<f32, 3> = SVector::from_vec(vec![3f32, 5f32, 2f32]);
-        let p3: SVector<f32, 3> = SVector::from_vec(vec![8f32, 4f32, 2f32]);
+        let p1: SVector<f32, 4> = SVector::from_vec(vec![0f32, 5f32, 9f32, 2f32]);
+        let p2: SVector<f32, 4> = SVector::from_vec(vec![0f32, 3f32, 5f32, 2f32]);
+        let p3: SVector<f32, 4> = SVector::from_vec(vec![0f32, 8f32, 4f32, 2f32]);
         let r1 = perform_scanline(p1, p2, p3);
         let r2 = perform_scanline(p2, p1, p3);
         let r3 = perform_scanline(p3, p1, p2);
@@ -136,11 +136,11 @@ mod scanline_tests {
     #[test]
     fn normalizes_in_y_dimension() {
         // expected ys: 1, 2, 3, 4, 5
-        let p1: SVector<f32, 3> = SVector::from_vec(vec![7f32, 0.3, 2f32]);
-        let p2: SVector<f32, 3> = SVector::from_vec(vec![1f32, 3.8, 2f32]);
-        let p3: SVector<f32, 3> = SVector::from_vec(vec![10f32, 5.8, 2f32]);
+        let p1: SVector<f32, 4> = SVector::from_vec(vec![0f32, 7f32, 0.3, 2f32]);
+        let p2: SVector<f32, 4> = SVector::from_vec(vec![0f32, 1f32, 3.8, 2f32]);
+        let p3: SVector<f32, 4> = SVector::from_vec(vec![0f32, 10f32, 5.8, 2f32]);
         let points = perform_scanline(p1, p2, p3);
-        let y_values: Vec<i32> = points.iter().map(|p| p[1] as i32).unique().collect();
+        let y_values: Vec<i32> = points.iter().map(|p| p[2] as i32).unique().collect();
         itertools::assert_equal(y_values, vec![1, 2, 3, 4, 5]);
     }
 }

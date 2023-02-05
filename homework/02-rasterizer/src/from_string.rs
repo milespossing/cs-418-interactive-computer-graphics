@@ -1,6 +1,4 @@
-use nalgebra::{SVector, Vector3, Vector4};
-
-use crate::models::{Entry, File, FileHeader, Rgb, Triangle, Vertex, Xyzw};
+use crate::models::{Entry, File, FileHeader, Triangle, Vertex};
 use std::str::FromStr;
 
 impl FromStr for Entry {
@@ -15,13 +13,13 @@ impl FromStr for Entry {
                 let y: f32 = segments[2].parse().unwrap();
                 let z: f32 = segments[3].parse().unwrap();
                 let w: f32 = segments[4].parse().unwrap();
-                Ok(Self::Xyzw(Vector4::new(x, y, z, w)))
+                Ok(Self::Xyzw([x, y, z, w]))
             }
             "rgb" => {
                 let r: f32 = segments[1].parse().unwrap();
                 let g: f32 = segments[2].parse().unwrap();
                 let b: f32 = segments[3].parse().unwrap();
-                Ok(Self::Rgb(Vector3::new(r, g, b)))
+                Ok(Self::Rgb([r, g, b]))
             }
             "tri" => {
                 let i1: i8 = segments[1].parse().unwrap();
@@ -49,12 +47,6 @@ impl FromStr for FileHeader {
     }
 }
 
-fn from_transform_and_color(xyzw: Xyzw, rgb: Rgb) -> SVector<f32, 7> {
-    SVector::from_vec(vec![
-        xyzw[0], xyzw[1], xyzw[2], xyzw[3], rgb[0], rgb[1], rgb[2],
-    ])
-}
-
 impl FromStr for File {
     type Err = String;
 
@@ -78,11 +70,11 @@ impl FromStr for File {
             .collect();
         let mut vertices: Vec<Vertex> = vec![];
         let mut triangles: Vec<Triangle> = vec![];
-        let mut current_color: Rgb = Vector3::new(255f32, 255f32, 255f32);
+        let mut current_color: [f32; 4] = [255f32, 255f32, 255f32, 255f32];
         for entry in entries {
             match entry {
-                Entry::Xyzw(xyzw) => vertices.push(from_transform_and_color(xyzw, current_color)),
-                Entry::Rgb(rgb) => current_color = rgb,
+                Entry::Xyzw(xyzw) => vertices.push(Vertex::from_xyzw_rgba(xyzw, current_color)),
+                Entry::Rgb(rgb) => current_color = [rgb[0], rgb[1], rgb[2], 255f32],
                 Entry::Triangle(indices) => {
                     let i1 = get_vertex(indices[0], &vertices);
                     let i2 = get_vertex(indices[1], &vertices);
@@ -131,9 +123,12 @@ tri 1 -2 -1";
         assert_matches!(&r, Ok(f) if f.header.name == "mp1indexing.png" && f.triangles.len() == 2);
         let triangles = r.unwrap().triangles;
         let expected: Triangle = [
-            SVector::from_vec(vec![1f32, 3.5, 3f32, 4f32, 255f32, 255f32, 255f32]),
-            SVector::from_vec(vec![2f32, 0f32, 0f32, 2f32, 0f32, 0f32, 0f32]),
-            SVector::from_vec(vec![-1f32, -2f32, -3f32, 4f32, 255f32, 255f32, 255f32]),
+            Vertex::from_xyzw_rgba([1f32, 3.5, 3f32, 4f32], [255f32, 255f32, 255f32, 255f32]),
+            Vertex::from_xyzw_rgba([2f32, 0f32, 0f32, 2f32], [0f32, 0f32, 0f32, 255f32]),
+            Vertex::from_xyzw_rgba(
+                [-1f32, -2f32, -3f32, 4f32],
+                [255f32, 255f32, 255f32, 255f32],
+            ),
         ];
         assert_eq!(triangles[0], expected)
     }
