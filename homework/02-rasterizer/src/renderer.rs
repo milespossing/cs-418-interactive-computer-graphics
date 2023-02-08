@@ -36,8 +36,7 @@ impl Renderer {
             .flatten()
             .collect();
         for fragment in fragments {
-            let x = fragment.transform[0] as usize;
-            let y = fragment.transform[1] as usize;
+            let (x, y) = fragment.get_transform();
             let new_fragment = Fragment::blend(&self.frame_buffer[y][x], &fragment);
             self.frame_buffer[y][x] = new_fragment;
         }

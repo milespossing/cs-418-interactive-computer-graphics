@@ -54,11 +54,8 @@ impl InterpolationConverter<Vertex, f32, 8> for VertexConverter {
     fn to_fragment(&self, vec: &SVector<f32, 8>) -> Fragment {
         let w_corr = vec[0];
         // TODO: Might need to add some error checking here
-        let transform: SVector<u32, 3> = SVector::from_vec(vec![
-            f32::floor(vec[1]) as u32,
-            f32::floor(vec[2]) as u32,
-            f32::floor(vec[3]) as u32,
-        ]);
+        let transform: SVector<u32, 3> =
+            SVector::from_vec(vec![vec[1] as u32, vec[2] as u32, vec[3] as u32]);
 
         let color: SVector<f32, 4> =
             SVector::from_vec(vec![vec[4], vec[5], vec[6], vec[7]]) / w_corr;
@@ -74,6 +71,8 @@ pub enum Entry {
     Xyzw([f32; 4]),
     Rgb([f32; 3]),
     Triangle([i8; 3]),
+    Comment,
+    Depth,
 }
 
 #[derive(Debug)]
@@ -102,12 +101,19 @@ impl Fragment {
         }
     }
 
+    // TODO: Rename to over/under
     pub fn blend(a: &Fragment, b: &Fragment) -> Fragment {
         Fragment {
             transform: a.transform,
             // using 'over' operator
             color: b.color + (255f32 - b.color[3]) * a.color,
         }
+    }
+
+    pub fn get_transform(&self) -> (usize, usize) {
+        let x = self.transform[0] as usize;
+        let y = self.transform[1] as usize;
+        (x, y)
     }
 }
 

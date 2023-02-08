@@ -27,6 +27,7 @@ impl FromStr for Entry {
                 let i3: i8 = segments[3].parse().unwrap();
                 Ok(Self::Triangle([i1, i2, i3]))
             }
+            "#" => Ok(Entry::Comment),
             _ => Err(format!("Could not parse line: {}", s)),
         }
     }
@@ -81,6 +82,7 @@ impl FromStr for File {
                     let i3 = get_vertex(indices[2], &vertices);
                     triangles.push([i1, i2, i3])
                 }
+                Entry::Comment => { /* Do nothing */ }
             }
         }
         Ok(File { header, triangles })
