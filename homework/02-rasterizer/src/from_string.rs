@@ -5,7 +5,6 @@ impl FromStr for Entry {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        println!("{}", s);
         let segments: Vec<&str> = s.split(' ').filter(|&s| !s.is_empty()).collect();
         match segments[0] {
             "xyzw" => {
@@ -27,6 +26,7 @@ impl FromStr for Entry {
                 let i3: i8 = segments[3].parse().unwrap();
                 Ok(Self::Triangle([i1, i2, i3]))
             }
+            "depth" => Ok(Entry::Depth),
             "#" => Ok(Entry::Comment),
             _ => Err(format!("Could not parse line: {}", s)),
         }
@@ -72,6 +72,7 @@ impl FromStr for File {
         let mut vertices: Vec<Vertex> = vec![];
         let mut triangles: Vec<Triangle> = vec![];
         let mut current_color: [f32; 4] = [255f32, 255f32, 255f32, 255f32];
+        let mut depth: bool = false;
         for entry in entries {
             match entry {
                 Entry::Xyzw(xyzw) => vertices.push(Vertex::from_xyzw_rgba(xyzw, current_color)),
@@ -82,10 +83,17 @@ impl FromStr for File {
                     let i3 = get_vertex(indices[2], &vertices);
                     triangles.push([i1, i2, i3])
                 }
+                Entry::Depth => {
+                    depth = true;
+                }
                 Entry::Comment => { /* Do nothing */ }
             }
         }
-        Ok(File { header, triangles })
+        Ok(File {
+            header,
+            triangles,
+            depth,
+        })
     }
 }
 

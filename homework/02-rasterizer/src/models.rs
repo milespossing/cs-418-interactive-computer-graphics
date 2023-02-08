@@ -54,12 +54,17 @@ impl InterpolationConverter<Vertex, f32, 8> for VertexConverter {
     fn to_fragment(&self, vec: &SVector<f32, 8>) -> Fragment {
         let w_corr = vec[0];
         // TODO: Might need to add some error checking here
-        let transform: SVector<u32, 3> =
-            SVector::from_vec(vec![vec[1] as u32, vec[2] as u32, vec[3] as u32]);
+        let transform: SVector<u32, 2> = SVector::from_vec(vec![vec[1] as u32, vec[2] as u32]);
+
+        let depth: f32 = vec[3];
 
         let color: SVector<f32, 4> =
             SVector::from_vec(vec![vec[4], vec[5], vec[6], vec[7]]) / w_corr;
-        Fragment { transform, color }
+        Fragment {
+            transform,
+            color,
+            depth,
+        }
     }
 }
 
@@ -85,28 +90,31 @@ pub struct FileHeader {
 pub struct File {
     pub header: FileHeader,
     pub triangles: Vec<Triangle>,
+    pub depth: bool,
 }
 
 #[derive(Clone)]
 pub struct Fragment {
-    pub transform: SVector<u32, 3>,
+    pub transform: SVector<u32, 2>,
+    pub depth: f32,
     pub color: SVector<f32, 4>,
 }
 
 impl Fragment {
     pub fn empty() -> Fragment {
         Fragment {
-            transform: SVector::<u32, 3>::zeros(),
+            transform: SVector::<u32, 2>::zeros(),
+            depth: 0f32,
             color: SVector::<f32, 4>::zeros(),
         }
     }
 
-    // TODO: Rename to over/under
-    pub fn blend(a: &Fragment, b: &Fragment) -> Fragment {
+    pub fn blend(under: &Fragment, over: &Fragment) -> Fragment {
         Fragment {
-            transform: a.transform,
+            transform: under.transform,
+            depth: under.depth,
             // using 'over' operator
-            color: b.color + (255f32 - b.color[3]) * a.color,
+            color: over.color + (255f32 - over.color[3]) * under.color,
         }
     }
 

@@ -8,6 +8,7 @@ use crate::{
 pub struct RendererSettings {
     pub width: u32,
     pub height: u32,
+    pub depth: bool,
 }
 
 pub struct Renderer {

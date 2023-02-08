@@ -17,6 +17,7 @@ fn main() {
     let settings: RendererSettings = RendererSettings {
         width: file.header.size.0,
         height: file.header.size.1,
+        depth: file.depth,
     };
     let mut renderer: Renderer = Renderer::from_settings(settings);
     let image = renderer.run(file.triangles);
@@ -44,6 +45,7 @@ mod test {
         let mut renderer = Renderer::from_settings(RendererSettings {
             width: 20u32,
             height: 30u32,
+            depth: false,
         });
         let triangle1 = [v1, v3, v2];
         let triangle2 = [v1, v3, v4];
