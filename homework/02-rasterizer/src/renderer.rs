@@ -13,6 +13,7 @@ pub struct RendererSettings {
 
 pub struct Renderer {
     pub frame_buffer: Vec<Vec<Fragment>>,
+    pub depth_buffer: Vec<Vec<f32>>,
     // pub image_buffer: ImageBuffer<Rgba<f32>, Vec<f32>>,
     rasterizer: BasicRasterizer,
     settings: RendererSettings,
@@ -20,11 +21,14 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn from_settings(settings: RendererSettings) -> Self {
-        let frame_buffer: Vec<Vec<Fragment>> =
-            vec![vec![Fragment::empty(); settings.width as usize]; settings.height as usize];
+        let uwidth = settings.width as usize;
+        let uheight = settings.height as usize;
+        let frame_buffer: Vec<Vec<Fragment>> = vec![vec![Fragment::empty(); uwidth]; uheight];
+        let depth_buffer: Vec<Vec<f32>> = vec![vec![f32::INFINITY; uwidth]; uheight];
         let rasterizer = BasicRasterizer::new(settings.width, settings.height);
         Renderer {
             frame_buffer,
+            depth_buffer,
             rasterizer,
             settings,
         }
@@ -36,8 +40,16 @@ impl Renderer {
             .map(|&t| self.rasterizer.rasterize(t))
             .flatten()
             .collect();
+
         for fragment in fragments {
             let (x, y) = fragment.get_transform();
+            if self.settings.depth {
+                let current_depth = self.depth_buffer[y][x];
+                if fragment.depth >= current_depth || fragment.depth < -1f32 {
+                    continue;
+                }
+                self.depth_buffer[y][x] = fragment.depth;
+            }
             let new_fragment = Fragment::blend(&self.frame_buffer[y][x], &fragment);
             self.frame_buffer[y][x] = new_fragment;
         }
