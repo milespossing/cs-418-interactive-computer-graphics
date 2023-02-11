@@ -32,42 +32,6 @@ impl PartialEq for Vertex {
     }
 }
 
-pub struct VertexConverter;
-
-impl InterpolationConverter<Vertex, f32, 8> for VertexConverter {
-    fn to_vector(&self, data: Vertex, width: f32, height: f32) -> SVector<f32, 8> {
-        let x_map = ((data.transform[0] / data.w) + 1f32) * (width / 2f32);
-        let y_map = ((data.transform[1] / data.w) + 1f32) * (height / 2f32);
-        let w_map = 1f32 / data.w;
-        SVector::from_vec(vec![
-            w_map,
-            x_map,
-            y_map,
-            data.transform[2],
-            data.rgba[0] * w_map,
-            data.rgba[1] * w_map,
-            data.rgba[2] * w_map,
-            data.rgba[3] * w_map,
-        ])
-    }
-
-    fn to_fragment(&self, vec: &SVector<f32, 8>) -> Fragment {
-        let w_corr = vec[0];
-        // TODO: Might need to add some error checking here
-        let transform: SVector<u32, 2> = SVector::from_vec(vec![vec[1] as u32, vec[2] as u32]);
-
-        let depth: f32 = vec[3];
-
-        let color: SVector<f32, 4> =
-            SVector::from_vec(vec![vec[4], vec[5], vec[6], vec[7]]) / w_corr;
-        Fragment {
-            transform,
-            color,
-            depth,
-        }
-    }
-}
-
 pub type Triangle = [Vertex; 3];
 
 // An entry in the input file
@@ -75,9 +39,11 @@ pub type Triangle = [Vertex; 3];
 pub enum Entry {
     Xyzw([f32; 4]),
     Rgb([f32; 3]),
+    Rgba([f32; 4]),
     Triangle([i8; 3]),
     Comment,
     Depth,
+    Srgb,
 }
 
 #[derive(Debug)]
@@ -91,6 +57,7 @@ pub struct File {
     pub header: FileHeader,
     pub triangles: Vec<Triangle>,
     pub depth: bool,
+    pub srgb: bool,
 }
 
 #[derive(Clone)]

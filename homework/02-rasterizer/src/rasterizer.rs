@@ -1,6 +1,7 @@
 use crate::{
     interpolation::perform_scanline,
-    models::{Fragment, InterpolationConverter, Triangle, VertexConverter},
+    models::{Fragment, InterpolationConverter, Triangle},
+    vertex_converter::VertexConverter,
 };
 
 pub trait Rasterizer {
@@ -11,15 +12,19 @@ pub trait Rasterizer {
 pub struct BasicRasterizer {
     width: u32,
     height: u32,
+    srgb: bool,
 }
 
 #[cfg(test)]
 mod map_tests {
-    use crate::models::{InterpolationConverter, Vertex, VertexConverter};
+    use crate::{
+        models::{InterpolationConverter, Vertex},
+        vertex_converter::VertexConverter,
+    };
 
     #[test]
     fn maps_triangle_correctly() {
-        let conv = VertexConverter;
+        let conv = VertexConverter::new(false);
         let width: f32 = 20f32;
         let height: f32 = 30f32;
         let v1 = Vertex::from_xyzw_rgba([1f32, 3.5, 3f32, 4f32], [0f32, 0f32, 0f32, 255f32]);
@@ -36,12 +41,16 @@ mod map_tests {
 }
 
 impl BasicRasterizer {
-    pub fn new(width: u32, height: u32) -> Self {
-        Self { width, height }
+    pub fn new(width: u32, height: u32, srgb: bool) -> Self {
+        Self {
+            width,
+            height,
+            srgb,
+        }
     }
 
     pub fn rasterize(&self, t: Triangle) -> Vec<Fragment> {
-        let conv = VertexConverter;
+        let conv = VertexConverter::new(self.srgb);
         perform_scanline(
             conv.to_vector(t[0], self.width as f32, self.height as f32),
             conv.to_vector(t[1], self.width as f32, self.height as f32),

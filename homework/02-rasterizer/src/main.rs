@@ -4,6 +4,7 @@ mod interpolation;
 mod models;
 mod rasterizer;
 mod renderer;
+mod vertex_converter;
 
 use from_file::from_file;
 use models::File;
@@ -18,6 +19,7 @@ fn main() {
         width: file.header.size.0,
         height: file.header.size.1,
         depth: file.depth,
+        srgb: file.srgb,
     };
     let mut renderer: Renderer = Renderer::from_settings(settings);
     let image = renderer.run(file.triangles);
@@ -46,6 +48,7 @@ mod test {
             width: 20u32,
             height: 30u32,
             depth: false,
+            srgb: false,
         });
         let triangle1 = [v1, v3, v2];
         let triangle2 = [v1, v3, v4];

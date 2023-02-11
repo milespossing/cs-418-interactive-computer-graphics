@@ -20,6 +20,13 @@ impl FromStr for Entry {
                 let b: f32 = segments[3].parse().unwrap();
                 Ok(Self::Rgb([r, g, b]))
             }
+            "rgba" => {
+                let r: f32 = segments[1].parse().unwrap();
+                let g: f32 = segments[2].parse().unwrap();
+                let b: f32 = segments[3].parse().unwrap();
+                let a: f32 = segments[4].parse().unwrap();
+                Ok(Self::Rgba([r, g, b, a]))
+            }
             "tri" => {
                 let i1: i8 = segments[1].parse().unwrap();
                 let i2: i8 = segments[2].parse().unwrap();
@@ -27,6 +34,7 @@ impl FromStr for Entry {
                 Ok(Self::Triangle([i1, i2, i3]))
             }
             "depth" => Ok(Entry::Depth),
+            "sRGB" => Ok(Entry::Srgb),
             "#" => Ok(Entry::Comment),
             _ => Err(format!("Could not parse line: {}", s)),
         }
@@ -73,10 +81,12 @@ impl FromStr for File {
         let mut triangles: Vec<Triangle> = vec![];
         let mut current_color: [f32; 4] = [255f32, 255f32, 255f32, 255f32];
         let mut depth: bool = false;
+        let mut srgb: bool = false;
         for entry in entries {
             match entry {
                 Entry::Xyzw(xyzw) => vertices.push(Vertex::from_xyzw_rgba(xyzw, current_color)),
                 Entry::Rgb(rgb) => current_color = [rgb[0], rgb[1], rgb[2], 255f32],
+                Entry::Rgba(rgba) => current_color = [rgba[0], rgba[1], rgba[2], rgba[3]],
                 Entry::Triangle(indices) => {
                     let i1 = get_vertex(indices[0], &vertices);
                     let i2 = get_vertex(indices[1], &vertices);
@@ -86,6 +96,9 @@ impl FromStr for File {
                 Entry::Depth => {
                     depth = true;
                 }
+                Entry::Srgb => {
+                    srgb = true;
+                }
                 Entry::Comment => { /* Do nothing */ }
             }
         }
@@ -93,6 +106,7 @@ impl FromStr for File {
             header,
             triangles,
             depth,
+            srgb,
         })
     }
 }
