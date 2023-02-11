@@ -35,6 +35,7 @@ impl FromStr for Entry {
             }
             "depth" => Ok(Entry::Depth),
             "sRGB" => Ok(Entry::Srgb),
+            "hyp" => Ok(Entry::Hyp),
             "#" => Ok(Entry::Comment),
             _ => Err(format!("Could not parse line: {}", s)),
         }
@@ -79,13 +80,14 @@ impl FromStr for File {
             .collect();
         let mut vertices: Vec<Vertex> = vec![];
         let mut triangles: Vec<Triangle> = vec![];
-        let mut current_color: [f32; 4] = [255f32, 255f32, 255f32, 255f32];
+        let mut current_color: [f32; 4] = [255f32, 255f32, 255f32, 1.0];
         let mut depth: bool = false;
         let mut srgb: bool = false;
+        let mut hyp: bool = false;
         for entry in entries {
             match entry {
                 Entry::Xyzw(xyzw) => vertices.push(Vertex::from_xyzw_rgba(xyzw, current_color)),
-                Entry::Rgb(rgb) => current_color = [rgb[0], rgb[1], rgb[2], 255f32],
+                Entry::Rgb(rgb) => current_color = [rgb[0], rgb[1], rgb[2], 1.0],
                 Entry::Rgba(rgba) => current_color = [rgba[0], rgba[1], rgba[2], rgba[3]],
                 Entry::Triangle(indices) => {
                     let i1 = get_vertex(indices[0], &vertices);
@@ -99,6 +101,9 @@ impl FromStr for File {
                 Entry::Srgb => {
                     srgb = true;
                 }
+                Entry::Hyp => {
+                    hyp = true;
+                }
                 Entry::Comment => { /* Do nothing */ }
             }
         }
@@ -107,6 +112,7 @@ impl FromStr for File {
             triangles,
             depth,
             srgb,
+            hyp,
         })
     }
 }

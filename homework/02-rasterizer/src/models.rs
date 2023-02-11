@@ -44,6 +44,7 @@ pub enum Entry {
     Comment,
     Depth,
     Srgb,
+    Hyp,
 }
 
 #[derive(Debug)]
@@ -58,6 +59,7 @@ pub struct File {
     pub triangles: Vec<Triangle>,
     pub depth: bool,
     pub srgb: bool,
+    pub hyp: bool,
 }
 
 #[derive(Clone)]
@@ -81,7 +83,7 @@ impl Fragment {
             transform: under.transform,
             depth: under.depth,
             // using 'over' operator
-            color: over.color + (255f32 - over.color[3]) * under.color,
+            color: over.color + (1.0 - over.color[3]) * under.color,
         }
     }
 

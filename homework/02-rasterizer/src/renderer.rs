@@ -10,6 +10,7 @@ pub struct RendererSettings {
     pub height: u32,
     pub depth: bool,
     pub srgb: bool,
+    pub hyp: bool,
 }
 
 pub struct Renderer {
@@ -26,7 +27,8 @@ impl Renderer {
         let uheight = settings.height as usize;
         let frame_buffer: Vec<Vec<Fragment>> = vec![vec![Fragment::empty(); uwidth]; uheight];
         let depth_buffer: Vec<Vec<f32>> = vec![vec![f32::INFINITY; uwidth]; uheight];
-        let rasterizer = BasicRasterizer::new(settings.width, settings.height, settings.srgb);
+        let rasterizer =
+            BasicRasterizer::new(settings.width, settings.height, settings.srgb, settings.hyp);
         Renderer {
             frame_buffer,
             depth_buffer,
@@ -64,7 +66,7 @@ impl Renderer {
                     fragment.color[0] as u8,
                     fragment.color[1] as u8,
                     fragment.color[2] as u8,
-                    (fragment.color[3]) as u8,
+                    (fragment.color[3] * 255f32) as u8,
                 ];
                 image.put_pixel(idx as u32, idy as u32, Rgba(color));
             }

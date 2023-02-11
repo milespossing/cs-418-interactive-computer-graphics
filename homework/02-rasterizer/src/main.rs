@@ -20,6 +20,7 @@ fn main() {
         height: file.header.size.1,
         depth: file.depth,
         srgb: file.srgb,
+        hyp: file.hyp,
     };
     let mut renderer: Renderer = Renderer::from_settings(settings);
     let image = renderer.run(file.triangles);
@@ -49,6 +50,7 @@ mod test {
             height: 30u32,
             depth: false,
             srgb: false,
+            hyp: false,
         });
         let triangle1 = [v1, v3, v2];
         let triangle2 = [v1, v3, v4];

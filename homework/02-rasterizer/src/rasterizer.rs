@@ -13,6 +13,7 @@ pub struct BasicRasterizer {
     width: u32,
     height: u32,
     srgb: bool,
+    hyp: bool,
 }
 
 #[cfg(test)]
@@ -24,7 +25,7 @@ mod map_tests {
 
     #[test]
     fn maps_triangle_correctly() {
-        let conv = VertexConverter::new(false);
+        let conv = VertexConverter::new(false, false);
         let width: f32 = 20f32;
         let height: f32 = 30f32;
         let v1 = Vertex::from_xyzw_rgba([1f32, 3.5, 3f32, 4f32], [0f32, 0f32, 0f32, 255f32]);
@@ -41,16 +42,17 @@ mod map_tests {
 }
 
 impl BasicRasterizer {
-    pub fn new(width: u32, height: u32, srgb: bool) -> Self {
+    pub fn new(width: u32, height: u32, srgb: bool, hyp: bool) -> Self {
         Self {
             width,
             height,
+            hyp,
             srgb,
         }
     }
 
     pub fn rasterize(&self, t: Triangle) -> Vec<Fragment> {
-        let conv = VertexConverter::new(self.srgb);
+        let conv = VertexConverter::new(self.srgb, self.hyp);
         perform_scanline(
             conv.to_vector(t[0], self.width as f32, self.height as f32),
             conv.to_vector(t[1], self.width as f32, self.height as f32),
