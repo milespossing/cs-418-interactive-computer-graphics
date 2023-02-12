@@ -115,6 +115,10 @@ pub fn perform_scanline<const D: usize>(
     fragments
 }
 
+pub fn perform_scanline_array<const D: usize>(arr: [SVector<f32, D>; 3]) -> Vec<SVector<f32, D>> {
+    perform_scanline(arr[0], arr[1], arr[2])
+}
+
 #[cfg(test)]
 mod scanline_tests {
     use super::perform_scanline;

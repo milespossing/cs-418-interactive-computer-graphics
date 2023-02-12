@@ -13,22 +13,44 @@ pub trait InterpolationConverter<T, U, const N: usize> {
 pub struct Vertex {
     pub w: f32,
     pub transform: [f32; 3],
-    pub rgba: [f32; 4],
+    pub rgb: [f32; 3],
+    pub alpha: f32,
 }
 
 impl Vertex {
-    pub fn from_xyzw_rgba(xyzw: [f32; 4], rgba: [f32; 4]) -> Self {
+    pub fn from_xyzw_rgba(xyzw: [f32; 4], rgb: [f32; 3], alpha: f32) -> Self {
         Vertex {
             w: xyzw[3],
             transform: [xyzw[0], xyzw[1], xyzw[2]],
-            rgba,
+            rgb,
+            alpha,
         }
+    }
+}
+
+impl Display for Vertex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Transform: ({}, {}, {}, {}); rgba: ({}, {}, {}, {});",
+            self.transform[0],
+            self.transform[1],
+            self.transform[2],
+            self.w,
+            self.rgb[0],
+            self.rgb[1],
+            self.rgb[2],
+            self.alpha,
+        )
     }
 }
 
 impl PartialEq for Vertex {
     fn eq(&self, other: &Self) -> bool {
-        self.w == other.w && self.transform == other.transform && self.rgba == other.rgba
+        self.w == other.w
+            && self.transform == other.transform
+            && self.rgb == other.rgb
+            && self.alpha == other.alpha
     }
 }
 
@@ -66,7 +88,8 @@ pub struct File {
 pub struct Fragment {
     pub transform: SVector<u32, 2>,
     pub depth: f32,
-    pub color: SVector<f32, 4>,
+    pub color: SVector<f32, 3>,
+    pub alpha: f32,
 }
 
 impl Fragment {
@@ -74,16 +97,20 @@ impl Fragment {
         Fragment {
             transform: SVector::<u32, 2>::zeros(),
             depth: 0f32,
-            color: SVector::<f32, 4>::zeros(),
+            color: SVector::<f32, 3>::zeros(),
+            alpha: 0f32,
         }
     }
 
-    pub fn blend(under: &Fragment, over: &Fragment) -> Fragment {
+    pub fn blend(dest: &Fragment, sor: &Fragment) -> Fragment {
+        let alpha = sor.alpha + dest.alpha * (1f32 - sor.alpha);
+        let color =
+            sor.color * sor.alpha / alpha + ((1f32 - sor.alpha) * dest.alpha * dest.color / alpha);
         Fragment {
-            transform: under.transform,
-            depth: under.depth,
-            // using 'over' operator
-            color: over.color + (1.0 - over.color[3]) * under.color,
+            transform: sor.transform,
+            depth: sor.depth,
+            color,
+            alpha,
         }
     }
 
@@ -94,8 +121,40 @@ impl Fragment {
     }
 }
 
+#[cfg(test)]
+mod fragment_tests {
+    use crate::models::Fragment;
+    use nalgebra::SVector;
+
+    #[test]
+    fn blends_correctly() {
+        let frag1 = Fragment {
+            transform: SVector::<u32, 2>::zeros(),
+            depth: 0f32,
+            color: SVector::<f32, 3>::from_vec(vec![255f32, 125f32, 0f32]),
+            alpha: 0.7,
+        };
+        let frag2 = Fragment {
+            transform: SVector::<u32, 2>::zeros(),
+            depth: 0f32,
+            color: SVector::<f32, 3>::from_vec(vec![0f32, 125f32, 255f32]),
+            alpha: 0.5,
+        };
+        let result = Fragment::blend(&frag1, &frag2);
+        assert_eq!(result.alpha, 0.85);
+        assert_eq!(
+            result.color,
+            SVector::<f32, 3>::from_vec(vec![150f32, 95.58823529, 45f32])
+        );
+    }
+}
+
 impl Display for Fragment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Transform:{}Color:{}", self.transform, self.color)
+        write!(
+            f,
+            "Transform:{}Color:{}Alpha: {}",
+            self.transform, self.color, self.alpha
+        )
     }
 }

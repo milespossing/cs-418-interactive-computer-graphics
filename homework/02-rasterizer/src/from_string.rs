@@ -80,15 +80,24 @@ impl FromStr for File {
             .collect();
         let mut vertices: Vec<Vertex> = vec![];
         let mut triangles: Vec<Triangle> = vec![];
-        let mut current_color: [f32; 4] = [255f32, 255f32, 255f32, 1.0];
+        let mut current_color: [f32; 3] = [255f32, 255f32, 255f32];
+        let mut current_alpha: f32 = 1.0;
         let mut depth: bool = false;
         let mut srgb: bool = false;
         let mut hyp: bool = false;
         for entry in entries {
             match entry {
-                Entry::Xyzw(xyzw) => vertices.push(Vertex::from_xyzw_rgba(xyzw, current_color)),
-                Entry::Rgb(rgb) => current_color = [rgb[0], rgb[1], rgb[2], 1.0],
-                Entry::Rgba(rgba) => current_color = [rgba[0], rgba[1], rgba[2], rgba[3]],
+                Entry::Xyzw(xyzw) => {
+                    vertices.push(Vertex::from_xyzw_rgba(xyzw, current_color, current_alpha))
+                }
+                Entry::Rgb(rgb) => {
+                    current_color = [rgb[0], rgb[1], rgb[2]];
+                    current_alpha = 1.0;
+                }
+                Entry::Rgba(rgba) => {
+                    current_color = [rgba[0], rgba[1], rgba[2]];
+                    current_alpha = rgba[3];
+                }
                 Entry::Triangle(indices) => {
                     let i1 = get_vertex(indices[0], &vertices);
                     let i2 = get_vertex(indices[1], &vertices);
@@ -153,12 +162,9 @@ tri 1 -2 -1";
         assert_matches!(&r, Ok(f) if f.header.name == "mp1indexing.png" && f.triangles.len() == 2);
         let triangles = r.unwrap().triangles;
         let expected: Triangle = [
-            Vertex::from_xyzw_rgba([1f32, 3.5, 3f32, 4f32], [255f32, 255f32, 255f32, 255f32]),
-            Vertex::from_xyzw_rgba([2f32, 0f32, 0f32, 2f32], [0f32, 0f32, 0f32, 255f32]),
-            Vertex::from_xyzw_rgba(
-                [-1f32, -2f32, -3f32, 4f32],
-                [255f32, 255f32, 255f32, 255f32],
-            ),
+            Vertex::from_xyzw_rgba([1f32, 3.5, 3f32, 4f32], [255f32, 255f32, 255f32], 1f32),
+            Vertex::from_xyzw_rgba([2f32, 0f32, 0f32, 2f32], [0f32, 0f32, 0f32], 1f32),
+            Vertex::from_xyzw_rgba([-1f32, -2f32, -3f32, 4f32], [255f32, 255f32, 255f32], 1f32),
         ];
         assert_eq!(triangles[0], expected)
     }
