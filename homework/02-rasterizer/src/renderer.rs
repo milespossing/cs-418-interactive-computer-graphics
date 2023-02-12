@@ -12,7 +12,7 @@ pub struct RendererSettings {
     pub depth: bool,
     pub srgb: bool,
     pub hyp: bool,
-    pub fssa: u8,
+    pub fsaa: u8,
 }
 
 pub struct Renderer {
@@ -31,9 +31,9 @@ fn srgb_to_linear(srgb: f32) -> f32 {
 
 fn linear_to_srgb(linear: f32) -> f32 {
     if linear <= 0.0031308 {
-        return linear * 12.92;
+        return linear * 12.92 * 255f32;
     } else {
-        return (1.055 * (linear.powf(1f32 / 2.4))) - 0.055;
+        return ((1.055 * (linear.powf(1f32 / 2.4))) - 0.055) * 255f32;
     }
 }
 
@@ -41,7 +41,11 @@ impl Renderer {
     pub fn from_settings(settings: RendererSettings) -> Self {
         let uwidth = settings.width as usize;
         let uheight = settings.height as usize;
-        let frame_buffer: Vec<Vec<Fragment>> = vec![vec![Fragment::empty(); uwidth]; uheight];
+        let frame_buffer: Vec<Vec<Fragment>> =
+            vec![
+                vec![Fragment::empty(); uwidth * settings.fsaa as usize];
+                uheight * settings.fsaa as usize
+            ];
         let depth_buffer: Vec<Vec<f32>> = vec![vec![f32::INFINITY; uwidth]; uheight];
         Renderer {
             frame_buffer,
@@ -59,8 +63,8 @@ impl Renderer {
     }
 
     fn vertex_to_vector(&self, data: Vertex) -> SVector<f32, 8> {
-        let x_map = ((data.transform[0] / data.w) + 1f32) * (self.settings.width / 2f32);
-        let y_map = ((data.transform[1] / data.w) + 1f32) * (self.settings.height / 2f32);
+        let x_map = ((data.transform[0] / data.w) + 1f32) * (self.settings.fsaa as f32 * self.settings.width / 2f32);
+        let y_map = ((data.transform[1] / data.w) + 1f32) * (self.settings.fsaa as f32 * self.settings.height / 2f32);
         let w_map = 1f32 / data.w;
         let color = self.pick_colors_from_vertex(data);
         // NTODO: Doesn't matter right now; will matter for hyp
@@ -108,6 +112,39 @@ impl Renderer {
         }
     }
 
+    // TODO: This could be more efficient with references, I think
+    fn get_fragments(&self, i: usize, j: usize) -> Vec<Fragment> {
+        let stride = self.settings.fsaa as usize;
+        let mut output: Vec<Fragment> = vec![];
+        for y in 0..stride {
+            for x in 0..stride {
+                output.push(self.frame_buffer[j + y][i + x].clone());
+            }
+        }
+        output
+    }
+
+    // Gets the framebuffer after applying fsaa
+    fn get_averaged_frame_buffer(&self) -> Vec<Vec<SVector<f32, 4>>> {
+        // stride is self.settings.fsaa
+        //
+        // 1. Get the fragments + neighbors at i, j for self.width&height
+        // 2. Average the fragments together
+        let mut buffer: Vec<Vec<SVector<f32, 4>>> = vec![];
+        for y in 0..self.settings.height as usize {
+            let mut line: Vec<SVector<f32, 4>> = vec![];
+            for x in 0..self.settings.width as usize {
+                let fragments = self.get_fragments(
+                    x * self.settings.fsaa as usize,
+                    y * self.settings.fsaa as usize,
+                );
+                line.push(Fragment::average(&fragments));
+            }
+            buffer.push(line);
+        }
+        buffer
+    }
+
     pub fn run(&mut self, triangles: Vec<Triangle>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         for triangle in triangles {
             let vertex: [SVector<f32, 8>; 3] = triangle.map(|v| self.vertex_to_vector(v));
@@ -130,6 +167,19 @@ impl Renderer {
             }
         }
 
+        let buffer: Vec<Vec<SVector<f32, 4>>> = match self.settings.fsaa {
+            a if a > 1 => self.get_averaged_frame_buffer(),
+            _ => self.frame_buffer.iter().map(|row| row.iter().map(|f| {
+                f.as_rgba()
+            }).collect()).collect(),
+        };
+
+        println!(
+            "Rendering buffer with size: ({},{})",
+            buffer.len(),
+            buffer[0].len()
+        );
+
         // creates the image
         let mut image: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_pixel(
             self.settings.width as u32,
@@ -138,19 +188,13 @@ impl Renderer {
         );
 
         // writes the image
-        for (idy, row) in self.frame_buffer.iter().enumerate() {
+        for (idy, row) in buffer.iter().enumerate() {
             for (idx, fragment) in row.iter().enumerate() {
                 // need to correct
-                let color_corr = match self.settings.srgb {
-                    true => fragment.color.map(|c| linear_to_srgb(c) * 255f32),
-                    false => fragment.color,
+                let color: [u8; 4] = match self.settings.srgb {
+                    true => [linear_to_srgb(fragment[0]) as u8, linear_to_srgb(fragment[1]) as u8, linear_to_srgb(fragment[2]) as u8, (fragment[3] * 255.0) as u8],
+                    false => [fragment[0] as u8, fragment[1] as u8, fragment[2] as u8, (fragment[3] * 255f32) as u8],
                 };
-                let color = [
-                    color_corr[0] as u8,
-                    color_corr[1] as u8,
-                    color_corr[2] as u8,
-                    (fragment.alpha * 255f32) as u8,
-                ];
                 image.put_pixel(idx as u32, idy as u32, Rgba(color));
             }
         }

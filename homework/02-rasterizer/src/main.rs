@@ -19,7 +19,7 @@ fn main() {
         depth: file.depth,
         srgb: file.srgb,
         hyp: file.hyp,
-        fssa: 1,
+        fsaa: file.fsaa,
     };
     let mut renderer: Renderer = Renderer::from_settings(settings);
     let image = renderer.run(file.triangles);
@@ -51,7 +51,7 @@ mod test {
             depth: false,
             srgb: false,
             hyp: false,
-            fssa: 1,
+            fsaa: 1,
         });
         let triangle1 = [v1, v3, v2];
         let triangle2 = [v1, v3, v4];

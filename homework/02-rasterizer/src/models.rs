@@ -1,4 +1,7 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::{Add, Div},
+};
 
 use nalgebra::SVector;
 
@@ -67,6 +70,7 @@ pub enum Entry {
     Depth,
     Srgb,
     Hyp,
+    Fsaa(u8),
 }
 
 #[derive(Debug)]
@@ -82,6 +86,7 @@ pub struct File {
     pub depth: bool,
     pub srgb: bool,
     pub hyp: bool,
+    pub fsaa: u8,
 }
 
 #[derive(Clone)]
@@ -114,10 +119,42 @@ impl Fragment {
         }
     }
 
+    pub fn as_rgba(&self) -> SVector<f32, 4> {
+        SVector::<f32, 4>::from_vec(vec![self.color[0], self.color[1], self.color[2], self.alpha])
+    }
+
+    pub fn average(fragments: &Vec<Self>) -> SVector<f32, 4> {
+        fragments.into_iter().map(|v| v.as_rgba()).sum::<SVector<f32, 4>>() / fragments.len() as f32
+    }
+
     pub fn get_transform(&self) -> (usize, usize) {
         let x = self.transform[0] as usize;
         let y = self.transform[1] as usize;
         (x, y)
+    }
+}
+
+impl Add<Self> for Fragment {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Fragment {
+            transform: self.transform,
+            depth: self.depth + rhs.depth,
+            color: self.color + rhs.color,
+            alpha: self.alpha + rhs.alpha,
+        }
+    }
+}
+
+impl Div<f32> for Fragment {
+    type Output = Self;
+    fn div(self, rhs: f32) -> Self {
+        Fragment {
+            transform: self.transform,
+            depth: self.depth / rhs,
+            color: self.color / rhs,
+            alpha: self.alpha / rhs,
+        }
     }
 }
 
