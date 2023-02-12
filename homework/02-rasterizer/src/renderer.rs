@@ -6,48 +6,6 @@ use crate::{
     models::{Fragment, Triangle, Vertex},
 };
 
-fn srgb_to_linear(srgb: f32) -> f32 {
-    if srgb <= 0.04045 {
-        return srgb / 12.92;
-    } else {
-        return ((srgb + 0.055) / 1.055).powf(2.4);
-    }
-}
-
-fn vertex_to_vector(
-    vertex: Vertex,
-    width: f32,
-    height: f32,
-    use_linear: bool,
-    use_hyp: bool,
-) -> SVector<f32, 8> {
-    let x_map = ((vertex.transform[0] / vertex.w) + 1f32) * (width / 2f32);
-    let y_map = ((vertex.transform[1] / vertex.w) + 1f32) * (height / 2f32);
-    let w_map = 1f32 / vertex.w;
-    let color_uncorrected = [vertex.rgb[0], vertex.rgb[1], vertex.rgb[2]];
-    let color = match use_linear {
-        true => color_uncorrected.map(|c| srgb_to_linear(c / 255f32)),
-        false => color_uncorrected,
-    };
-    let (corr_color, corr_alpha, z) = match use_hyp {
-        true => (
-            color.map(|c| c * w_map),
-            vertex.alpha * w_map,
-            vertex.transform[2] * w_map,
-        ),
-        false => (color, vertex.alpha, vertex.transform[2]),
-    };
-    SVector::from_vec(vec![
-        w_map,
-        x_map,
-        y_map,
-        z,
-        corr_color[0],
-        corr_color[1],
-        corr_color[2],
-        corr_alpha,
-    ])
-}
 pub struct RendererSettings {
     pub width: f32,
     pub height: f32,
@@ -61,6 +19,14 @@ pub struct Renderer {
     pub frame_buffer: Vec<Vec<Fragment>>,
     pub depth_buffer: Vec<Vec<f32>>,
     settings: RendererSettings,
+}
+
+fn srgb_to_linear(srgb: f32) -> f32 {
+    if srgb <= 0.04045 {
+        return srgb / 12.92;
+    } else {
+        return ((srgb + 0.055) / 1.055).powf(2.4);
+    }
 }
 
 fn linear_to_srgb(linear: f32) -> f32 {
@@ -87,7 +53,7 @@ impl Renderer {
     fn pick_colors_from_vertex(&self, data: Vertex) -> [f32; 3] {
         let colors = [data.rgb[0], data.rgb[1], data.rgb[2]];
         match self.settings.srgb {
-            true => colors.map(|c| srgb_to_linear(c)),
+            true => colors.map(|c| srgb_to_linear(c / 255f32)),
             false => colors,
         }
     }
@@ -97,6 +63,7 @@ impl Renderer {
         let y_map = ((data.transform[1] / data.w) + 1f32) * (self.settings.height / 2f32);
         let w_map = 1f32 / data.w;
         let color = self.pick_colors_from_vertex(data);
+        // NTODO: Doesn't matter right now; will matter for hyp
         let (corr_color, corr_alpha, z) = match self.settings.hyp {
             true => (
                 color.map(|c| c * w_map),
@@ -163,28 +130,27 @@ impl Renderer {
             }
         }
 
+        // creates the image
         let mut image: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_pixel(
             self.settings.width as u32,
             self.settings.height as u32,
             Rgba([0u8; 4]),
         );
 
+        // writes the image
         for (idy, row) in self.frame_buffer.iter().enumerate() {
             for (idx, fragment) in row.iter().enumerate() {
-                //let corrected_color = fragment.color.map(|c| c / fragment.alpha);
-                let fragment_color = match self.settings.srgb {
-                    true => fragment.color.map(|c| linear_to_srgb(c)),
-                    false => fragment.color,
-                };
                 let color = [
-                    fragment_color[0] as u8,
-                    fragment_color[1] as u8,
-                    fragment_color[2] as u8,
+                    fragment.color[0] as u8,
+                    fragment.color[1] as u8,
+                    fragment.color[2] as u8,
                     (fragment.alpha * 255f32) as u8,
                 ];
                 image.put_pixel(idx as u32, idy as u32, Rgba(color));
             }
         }
+
+        // returns the image
         image
     }
 }
