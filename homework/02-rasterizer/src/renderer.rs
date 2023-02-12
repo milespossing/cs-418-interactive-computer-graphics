@@ -95,14 +95,14 @@ impl Renderer {
             true => (c.map(|c| c / w_corr), vec[7] / w_corr, vec[3] / w_corr),
         };
 
-        let color: SVector<f32, 3> = match self.settings.srgb {
-            true => colors_corr.map(|c| linear_to_srgb(c) * 255f32),
-            false => colors_corr,
-        };
+        // let color: SVector<f32, 3> = match self.settings.srgb {
+        //     true => colors_corr.map(|c| linear_to_srgb(c) * 255f32),
+        //     false => colors_corr,
+        // };
 
         Fragment {
             transform,
-            color,
+            color: colors_corr,
             depth,
             alpha,
         }
@@ -140,10 +140,15 @@ impl Renderer {
         // writes the image
         for (idy, row) in self.frame_buffer.iter().enumerate() {
             for (idx, fragment) in row.iter().enumerate() {
+                // need to correct
+                let color_corr = match self.settings.srgb {
+                    true => fragment.color.map(|c| linear_to_srgb(c) * 255f32),
+                    false => fragment.color,
+                };
                 let color = [
-                    fragment.color[0] as u8,
-                    fragment.color[1] as u8,
-                    fragment.color[2] as u8,
+                    color_corr[0] as u8,
+                    color_corr[1] as u8,
+                    color_corr[2] as u8,
                     (fragment.alpha * 255f32) as u8,
                 ];
                 image.put_pixel(idx as u32, idy as u32, Rgba(color));
