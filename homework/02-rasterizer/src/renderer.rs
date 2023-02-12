@@ -1,5 +1,5 @@
 use image::{ImageBuffer, Rgba};
-use nalgebra::SVector;
+use nalgebra::{SVector};
 
 use crate::{
     interpolation::perform_scanline_array,
@@ -13,6 +13,7 @@ pub struct RendererSettings {
     pub srgb: bool,
     pub hyp: bool,
     pub fsaa: u8,
+    pub cull: bool,
 }
 
 pub struct Renderer {
@@ -35,6 +36,15 @@ fn linear_to_srgb(linear: f32) -> f32 {
     } else {
         return ((1.055 * (linear.powf(1f32 / 2.4))) - 0.055) * 255f32;
     }
+}
+
+fn cull(triangle: &Triangle) -> bool {
+    let vertices = triangle.map(|v| SVector::<f32, 3>::from_vec(vec![v.transform[0], v.transform[1], v.transform[2]]));
+    let vec1: SVector<f32, 3> = vertices[1] - vertices[0];
+    let vec2: SVector<f32, 3> = vertices[2] - vertices[1];
+    let cross: SVector<f32, 3> = vec1.cross(&vec2);
+    println!("cross: {:?}", cross);
+    cross[2] < 0f32
 }
 
 impl Renderer {
@@ -145,8 +155,9 @@ impl Renderer {
         buffer
     }
 
+
     pub fn run(&mut self, triangles: Vec<Triangle>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
-        for triangle in triangles {
+        for triangle in triangles.iter().filter(|t| !self.settings.cull || cull(t)) {
             let vertex: [SVector<f32, 8>; 3] = triangle.map(|v| self.vertex_to_vector(v));
             let fragments: Vec<Fragment> = perform_scanline_array(vertex)
                 .iter()
@@ -173,12 +184,6 @@ impl Renderer {
                 f.as_rgba()
             }).collect()).collect(),
         };
-
-        println!(
-            "Rendering buffer with size: ({},{})",
-            buffer.len(),
-            buffer[0].len()
-        );
 
         // creates the image
         let mut image: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_pixel(

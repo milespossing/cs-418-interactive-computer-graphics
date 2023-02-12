@@ -5,3 +5,7 @@ mp1depth.txt
 mp1srgb.txt
 mp1hyp.txt
 mp1rgba.txt
+mp1fsaa4.txt
+mp1fsaa3.txt
+mp1fsaa2.txt
+mp1cull.txt

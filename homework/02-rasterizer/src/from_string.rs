@@ -36,6 +36,7 @@ impl FromStr for Entry {
             "depth" => Ok(Entry::Depth),
             "sRGB" => Ok(Entry::Srgb),
             "hyp" => Ok(Entry::Hyp),
+            "cull" => Ok(Entry::Cull),
             "fsaa" => {
                 let level: u8 = segments[1].parse().unwrap();
                 Ok(Self::Fsaa(level))
@@ -90,6 +91,7 @@ impl FromStr for File {
         let mut srgb: bool = false;
         let mut hyp: bool = false;
         let mut fsaa: u8 = 1;
+        let mut cull: bool = false;
         for entry in entries {
             match entry {
                 Entry::Xyzw(xyzw) => {
@@ -121,6 +123,9 @@ impl FromStr for File {
                 Entry::Fsaa(level) => {
                     fsaa = level;
                 }
+                Entry::Cull => {
+                    cull = true;
+                }
                 Entry::Comment => { /* Do nothing */ }
             }
         }
@@ -131,6 +136,7 @@ impl FromStr for File {
             srgb,
             hyp,
             fsaa,
+            cull,
         })
     }
 }

@@ -20,6 +20,7 @@ fn main() {
         srgb: file.srgb,
         hyp: file.hyp,
         fsaa: file.fsaa,
+        cull: file.cull,
     };
     let mut renderer: Renderer = Renderer::from_settings(settings);
     let image = renderer.run(file.triangles);
