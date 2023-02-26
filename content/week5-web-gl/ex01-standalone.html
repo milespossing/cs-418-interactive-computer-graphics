@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+<meta charset="utf-8">
+<title>Minimal HTML to support WebGL</title>
+<script>
+function compileAndLinkGLSL() {
+    // A program consists of two shaders: one vertex and one fragment;
+    // here we give the source of those two as backtick-strings.
+    // Each must begin "#version 300 es" -- not even a newline before it
+    const vs_source = `#version 300 es
+    void main() {
+        // gl_Position is a built-in output of every vertex shader's main function
+        gl_Position = vec4(sin(float(gl_VertexID)),
+                           cos(float(gl_VertexID)),
+                           0,
+                           1);
+    }`
+
+    const fs_source = `#version 300 es
+    precision highp float; // fragment shaders have to specify a precision
+    out vec4 anyNameYouWant; // an out vec is used as fragment color
+    void main() {
+        anyNameYouWant = vec4(1, 0, 0.5, 1);
+    }`
+
+    // We compile each shader separately, checking for errors.
+    let vs = gl.createShader(gl.VERTEX_SHADER)
+    gl.shaderSource(vs, vs_source)
+    gl.compileShader(vs)
+    if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(vs))
+        throw Error("Vertex shader compilation failed")
+    }
+
+    let fs = gl.createShader(gl.FRAGMENT_SHADER)
+    gl.shaderSource(fs, fs_source)
+    gl.compileShader(fs)
+    if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(fs))
+        throw Error("Fragment shader compilation failed")
+    }
+
+    // Then we link them together into a program, checking for errors.
+    // Here I used the global window.program so I don't have to pass it around
+    window.program = gl.createProgram()
+    gl.attachShader(program, vs)
+    gl.attachShader(program, fs)
+    gl.linkProgram(program)
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(program))
+        throw Error("Linking failed")
+    }
+}
+
+function draw() {
+    gl.clear(gl.COLOR_BUFFER_BIT) // erase and previous contents
+    // it's good practice to explicitly pick a program each time we draw
+    gl.useProgram(program)
+    const connection = gl.LINES // or gl.TRIANGLES or gl.POINTS
+    const offset = 0            // unused here, but required
+    const count = 20            // number of vertices to draw
+    gl.drawArrays(gl.TRIANGLES, offset, count)
+}
+
+window.addEventListener('load',(event)=>{
+    window.gl = document.querySelector('canvas').getContext('webgl2')
+    compileAndLinkGLSL()
+    draw()
+})
+</script>
+</head>
+<body>
+<canvas width="300" height="300"></canvas>
+</body>
+</html>
+
