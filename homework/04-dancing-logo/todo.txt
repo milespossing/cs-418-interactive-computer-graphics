@@ -1,0 +1,3 @@
+(B) Compliance content +required
+(x) Radio buttons
+(x) First animation
