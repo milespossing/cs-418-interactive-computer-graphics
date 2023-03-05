@@ -8,12 +8,13 @@ const identity = (a) => a;
 // modes:
 // mv: (modelView) processes the model view as a function of time
 const processFrame = (ms, delta) => (entity) => {
-  const { mode, velocity, transform, mv } = entity;
+  const { mode } = entity;
   switch (mode) {
     case 'static':
-      return { ...entity, modelView: math.identity(4) };
+      const modelView = entity.model ?? math.identity(4);
+      return { ...entity, modelView };
     case 'mv':
-      return { ...entity, modelView: mv(ms) };
+      return { ...entity, modelView: entity.mv(ms) };
     default: throw Error('Unknown mode');
   }
 };
@@ -25,22 +26,29 @@ const draw = (gl, program, setupGeometry) => {
     const { modelView, geometry, preProcess } = entity;
     const processedGeometry = preProcess ? preProcess(geometry, ms) : geometry;
     const glslGeometry = setupGeometry(processedGeometry, 'dynamic');
+    if (false && ms < 1000) {
+      console.table(modelView);
+      console.log(modelView.toArray().flat());
+    }
     const arrTransform = new Float32Array(modelView.toArray().flat());
     gl.uniform1i(transformFirstBindPoint, !!entity.gpuTransform);
-    gl.uniformMatrix4fv(mvBindPoint, false, arrTransform);
+    gl.uniformMatrix4fv(mvBindPoint, true, arrTransform);
     gl.bindVertexArray(glslGeometry.vao);
     gl.drawElements(glslGeometry.mode, glslGeometry.count, glslGeometry.type, 0);
   };
 };
 
-export const eventLoop = (gl, program, setupGeometry) => {
+export const eventLoop = (gl, program, setupGeometry, hooks = {}) => {
   gl.useProgram(program);
   const secondsBindPoint = gl.getUniformLocation(program, 'seconds');
   const drawEntity = draw(gl, program, setupGeometry);
+  // the main render loop for the program
   const loop = (last) => (ms) => {
+    if (hooks.preRender) hooks.preRender();
     const delta = ms - last;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform1f(secondsBindPoint, ms / 1000);
+    window.entities = window.systems.reduce((agg, s) => s(agg, delta, ms), window.entities);
     window.entities = window.entities.map(processFrame(ms, delta));
     window.entities.forEach(drawEntity(ms));
     return requestAnimationFrame(loop(ms));
