@@ -1,5 +1,6 @@
 <html>
   <head>
+    <script src="https://unpkg.com/mathjs@11.6.0/lib/browser/math.js"></script>
     <script src="index.js" type="module"></script>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
   </head>
@@ -9,6 +10,18 @@
       <label for="static">Static</label><br>
       <input type="radio" id="rotation" name="implemented" value="rotation">
       <label for="rotation">Rotation</label><br>
+      <input type="radio" id="rotation2" name="implemented" value="rotation2">
+      <label for="rotation2">Rotation with a triangle</label><br>
+      <input type="radio" id="grow-shrink" name="implemented" value="growAndShrink">
+      <label for="grow-shrink">Grow and Shrink</label><br>
+      <input type="radio" id="basic-dance" name="implemented" value="simpleDance">
+      <label for="basic-dance">Required 1: A Basic dance with our majestic logo</label><br>
+      <input type="radio" id="another-animation" name="implemented" value="triangleSimple">
+      <label for="another-animation">Required 2: The same basic dance with a somewhat less majestic triangle</label><br>
+      <input type="radio" id="cpu-transform" name="implemented" value="cpuTransform">
+      <label for="cpu-transform">Optional 1: CPU vertex transformer</label><br>
+      <input type="radio" id="gpu-transform" name="implemented" value="gpuTransform">
+      <label for="gpu-transform">Optional 2: gpu vertex transformer</label><br>
     </fieldset>  
     <canvas width="300" height="300" id="main"></canvas>
   </body>

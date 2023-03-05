@@ -29,7 +29,7 @@ export const compileAndLinkGLSL = (gl) => (vs_source, fs_source) => {
   return program;
 };
 
-const setupGeometry = (gl, program) => data => {
+const setupGeometry = (gl, program) => (data, type = 'static') => {
   const triangleArray = gl.createVertexArray();
   gl.bindVertexArray(triangleArray);
 
@@ -37,7 +37,7 @@ const setupGeometry = (gl, program) => data => {
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     const f32 = new Float32Array(entries.flat());
-    gl.bufferData(gl.ARRAY_BUFFER, f32, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, f32, type === 'static' ? gl.STATIC_DRAW : gl.DYNAMIC_DRAW);
 
     const loc = gl.getAttribLocation(program, name);
     gl.vertexAttribPointer(loc, entries[0].length, gl.FLOAT, false, 0, 0);
@@ -58,15 +58,12 @@ const setupGeometry = (gl, program) => data => {
 };
 
 // Returns a tuple of type [program, geometry]
-export const compileAndLinkAnimation = async (gl, geometry) => {
+export const compileAndLinkAnimation = async (gl) => {
   const compile = compileAndLinkGLSL(gl);
   const root = 'animations/';
   const vs = await fetch(root + 'vertex.glsl').then(r => r.text());
   const fr = await fetch(root + 'fragment.glsl').then(r => r.text());
   const program = compile(vs, fr);
-  const geom = Object
-    .keys(geometry)
-    .map((key) => [key, setupGeometry(gl, program)(geometry[key])])
-    .reduce((agg, [key, value]) => ({ ...agg, [key]: value }), {});
-  return [program, geom];
+  const setupGeom = setupGeometry(gl, program);
+  return [program, setupGeom];
 };

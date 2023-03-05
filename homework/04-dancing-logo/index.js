@@ -1,27 +1,40 @@
 import { compileProgram, transformers } from './animations/index.js';
+import { eventLoop } from './collision.js';
 
-const draw = (gl, program) => {
-  // performs another iteration
-  const loop = (geometry) => (ms) => {
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(program);
-
-    // the transformer to use for the next frame
-    const transform = new Float32Array(window.transformer(ms / 1000));
-    const transformBindPoint = gl.getUniformLocation(program, 'transform');
-    gl.uniformMatrix4fv(transformBindPoint, false, transform);
-
-    gl.bindVertexArray(geometry.vao);
-    gl.drawElements(geometry.mode, geometry.count, geometry.type, 0);
-    requestAnimationFrame(loop(window.geometry));
-  };
-  loop(window.geometry)(0);
-};
-
-const animations = {
-  static: ['static', 'logo'],
-  rotation: ['rotation', 'logo'],
+const cpuProcessor = (amplitude) => (data, ms) => {
+  const { attributes } = data;
+  const { position } = attributes;
+  const [ head, ...rest ] = position;
+  const [x, y] = head;
+  const deltaX = amplitude * Math.sin(ms / 1000);
+  const deltaY = amplitude * Math.cos(ms / 1000);
+  return { ...data, attributes: { ...attributes, position: [[x + deltaX, y + deltaY], ...rest]}};
 }
+
+const buildAnimations = geometries => ({
+  static: [{
+    mode: 'static',
+    geometry: geometries['logo'],
+  }],
+  rotation: [{
+    mode: 'mv',
+    mv: transformers['rotation'],
+    geometry: geometries['logo'],
+  }],
+  rotation2: [{
+    mode: 'mv',
+    mv: transformers['rotation'],
+    geometry: geometries['triangle']
+  }],
+  growAndShrink: [{ mode: 'mv',
+    mv: transformers['growAndShrink'],
+    geometry: geometries['logo']
+  }],
+  simpleDance: [{ mode: 'mv', mv: transformers['simpleDance'], geometry: geometries['logo'] }],
+  triangleSimple: [{ mode: 'mv', mv: transformers['simpleDance'], geometry: geometries['triangle'] }],
+  cpuTransform: [{ mode: 'mv', mv: transformers['growAndShrink'], geometry: geometries['logo'], preProcess: cpuProcessor(0.25) }],
+  gpuTransform: [{ mode: 'mv', mv: transformers['growAndShrink'], geometry: geometries['logo'], gpuTransform: true } ],
+});
 
 const setAnimation = () => {
   const radios = document.getElementsByName('implemented');
@@ -33,12 +46,7 @@ const setAnimation = () => {
     }
   }
   if (!checked) throw Error('animation not found')
-  const [transformerType, geometryType] = animations[checked.value];
-  const transformer = transformers[transformerType];
-  const geometry = window.geometries[geometryType];
-  if (!transformer || !geometry) throw Error('Invalid animation');
-  window.transformer = transformer;
-  window.geometry = geometry;
+  window.entities = window.animations[checked.value];
 }
 
 const setup = async () => {
@@ -46,14 +54,18 @@ const setup = async () => {
     .forEach(r => r.addEventListener('change', setAnimation));
   const gl = document.querySelector('canvas').getContext('webgl2');
   const logo = await fetch('logo.json').then(b => b.json());
-  const geometryData = { logo };
-  console.log(geometryData);
-  const [program, geometries] = await compileProgram(gl, geometryData);
-  console.log(geometries);
-  window.geometries = geometries;
-  setAnimation();
+  const triangle = await fetch('triangle.json').then(b => b.json());
+  const geometryData = { logo, triangle };
+  const [program, setupGeometry] = await compileProgram(gl);
 
-  draw(gl, program);
+  console.log(setupGeometry);
+  window.setupGeometry = setupGeometry;
+  window.processGeometry = setupGeometry;
+  window.geometries = geometryData;
+  window.animations = buildAnimations(geometryData);
+  setAnimation();
+  eventLoop(gl, program, setupGeometry);
 };
+
 
 window.addEventListener('load', setup);
