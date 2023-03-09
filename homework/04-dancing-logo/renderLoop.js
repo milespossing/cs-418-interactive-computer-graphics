@@ -41,6 +41,7 @@ const draw = (gl, program, setupGeometry) => {
 export const eventLoop = (gl, program, setupGeometry, hooks = {}) => {
   gl.useProgram(program);
   const secondsBindPoint = gl.getUniformLocation(program, 'seconds');
+  const psychedelicBindPoint = gl.getUniformLocation(program, 'psychedelic');
   const drawEntity = draw(gl, program, setupGeometry);
   // the main render loop for the program
   const loop = (last) => (ms) => {
@@ -48,6 +49,7 @@ export const eventLoop = (gl, program, setupGeometry, hooks = {}) => {
     const delta = ms - last;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform1f(secondsBindPoint, ms / 1000);
+    gl.uniform1i(psychedelicBindPoint, !!window.psychedelic);
     window.entities = window.systems.reduce((agg, s) => s(agg, delta, ms), window.entities);
     window.entities = window.entities.map(processFrame(ms, delta));
     window.entities.forEach(drawEntity(ms));

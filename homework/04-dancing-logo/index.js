@@ -114,6 +114,15 @@ const buildAnimations = geometries => ({
       },
     ],
     systems: [sideReflectSystem, entityCollision, velocitySystem],
+  },
+  psychedelic: {
+    entities: [
+      {
+        mode: 'static',
+        geometry: geometries['quad'],
+      }
+    ],
+    fragment: 'psychedelic',
   }
 });
 
@@ -127,18 +136,22 @@ const setAnimation = () => {
     }
   }
   if (!checked) throw Error('animation not found')
-  const { entities, systems } = window.animations[checked.value];
+  const { entities, systems, fragment } = window.animations[checked.value];
   window.entities = entities;
   window.systems = systems ?? [];
+  window.psychedelic = fragment === 'psychedelic';
+  console.log(window.psychedelic);
 }
 
 const setup = async () => {
   document.getElementsByName('implemented')
     .forEach(r => r.addEventListener('change', setAnimation));
   const gl = document.querySelector('canvas').getContext('webgl2');
-  const logo = await fetch('logo.json').then(b => b.json());
-  const triangle = await fetch('triangle.json').then(b => b.json());
-  const geometryData = { logo, triangle };
+  const toJson = b => b.json();
+  const logo = await fetch('logo.json').then(toJson);
+  const triangle = await fetch('triangle.json').then(toJson);
+  const quad = await fetch('quad.json').then(toJson);
+  const geometryData = { logo, triangle, quad };
   const [program, setupGeometry] = await compileProgram(gl);
 
   // console.log(setupGeometry);
