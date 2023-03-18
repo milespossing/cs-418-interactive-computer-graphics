@@ -1,9 +1,9 @@
-Required:
+Required Implementations:
 Logo
 Triangle
 Radio Buttons
-Optional:
-CPU Vertex  (15)
-GPU Vertex  (10)
-Collisions  (15)
-Psychedelic (15)
+Optional Implementations:
+CPU Vertex
+GPU Vertex
+Collisions
+Psychedelic

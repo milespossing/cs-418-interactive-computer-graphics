@@ -5,6 +5,7 @@ import sideReflectSystem from './systems/sideReflectSystem.js';
 import positionLogger from './systems/positionLogger.js';
 import entityCollision from './systems/entityCollisionSystem.js';
 
+// Processes cpu-based vertex manipulation
 const cpuProcessor = (amplitude) => (data, ms) => {
   const { attributes } = data;
   const { position } = attributes;
@@ -15,6 +16,7 @@ const cpuProcessor = (amplitude) => (data, ms) => {
   return { ...data, attributes: { ...attributes, position: [[x + deltaX, y + deltaY], ...rest]}};
 }
 
+// creates all of our animations, sets their geometries and settings
 const buildAnimations = geometries => ({
   static: {
     entities: [{
@@ -126,6 +128,7 @@ const buildAnimations = geometries => ({
   }
 });
 
+// Sets the selected animation
 const setAnimation = () => {
   const radios = document.getElementsByName('implemented');
   let checked;
@@ -143,6 +146,7 @@ const setAnimation = () => {
   console.log(window.psychedelic);
 }
 
+// set up our animations, and renderLoop
 const setup = async () => {
   document.getElementsByName('implemented')
     .forEach(r => r.addEventListener('change', setAnimation));

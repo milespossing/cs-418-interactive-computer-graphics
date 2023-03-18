@@ -16,7 +16,6 @@ const system = ([left, right]) => {
 
   const overlapX = math.min(leftMaxX, rightMaxX) - math.max(leftMinX, rightMinX);
   const overlapY = math.min(leftMaxY, rightMaxY) - math.max(leftMinY, rightMinY);
-  // TODO: determine which side this is actually happening on for more consistent results
   if (overlapX < overlapY) {
     return leftMinX < rightMinX
       ? [left.velocity.get([0]) < 0 ? left : flipX(left), right.velocity.get([0]) > 0 ? right : flipX(right)]
