@@ -53,6 +53,7 @@ window.addEventListener('load', event=> {
                     num.step = 'any' // for number; ignored otherwise
                     let lab = document.createElement('label')
                     lab.append(num)
+                    lab.append(' ')
                     lab.append(opt2.label)
                     d.append(lab)
                 }
@@ -77,7 +78,10 @@ window.addEventListener('load', event=> {
             let t = controlOptions[scene].options?.[k]?.['type']
             let d = controlOptions[scene].options?.[k]?.['default']
             if (t == 'number') return [k, Number(v)||d||0]
-            if (t == 'checkbox') return [k, v == 'true']
+            if (t == 'checkbox') {
+              console.log(k,v);
+              return [k, v == 'true']
+            }
             return [k,v]
         }))
         // add any missing options if they have defaults
@@ -88,6 +92,6 @@ window.addEventListener('load', event=> {
             }
         })
         // send the result to the scene generating callback function
-        setupScene(scene, options)
+        window.setupScene(scene, options)
     })
 })

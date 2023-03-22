@@ -1,0 +1,24 @@
+Plan
+
+Required:
+[] start with simple geometry
+  [] need view
+  [] need lighting
+[] Get Terrain running in toy example
+[] Set up UI for configurability
+
+Optional (55):
+[] Shiny (10)
+[] Height-based color ramp (20) ((30))
+[] Rocky Cliffs (20) ((50))
+[] Torus (15) ((65))
+
+Because there may or may not be a different geometry for the torus, I
+need some way to selectively set up the geometry. Whatever I do for
+required 0 I should make sure that I keep that in the final product.
+
+Because the rocky cliffs must have a different material, I should ensure
+that it is easy for me to select materials based on some criteria (that
+might be very difficult, I don't know)
+
+

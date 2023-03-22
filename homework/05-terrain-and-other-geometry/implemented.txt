@@ -1,0 +1,6 @@
+Required:
+Terrain
+
+Optional:
+Shiny
+Height-based Color Ramp
