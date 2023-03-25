@@ -4,3 +4,4 @@ Terrain
 Optional:
 Shiny
 Height-based Color Ramp
+Rocky Cliffs

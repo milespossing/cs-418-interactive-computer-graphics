@@ -24,14 +24,14 @@ in vec4 lightdir1;
 void main() {
     vec3 y_arc = normalize(mnormal);
     float ctheta = dot(y_arc, Y); // cos(theta)
-    bool isCliff = ctheta < 0.8;
+    bool isCliff = ctheta < 0.9;
     float h_norm = (height - minHeight) * PI / (maxHeight - minHeight);
     vec4 color = isCliff ? cliffColor : pow(max(0.0, cos(h_norm)),2.0) * color1 + pow(max(0.0, sin(h_norm)),2.0) * color2 + pow(max(0.0,-cos(h_norm)),2.0) * color3;
     vec3 n = normalize(fnormal);
     float lambert1 = max(dot(lightdir1.xyz, n), 0.0);
-    float blinn1 = pow(max(dot(halfway, n), 0.0), 300.0);
+    float blinn1 = pow(max(dot(halfway, n), 0.0), 20.0);
     fragColor = vec4(color.rgb * (
                      lightcolor1 * lambert1 +
-                     lightcolor1 * blinn1 * blinnAmount
+                     (isCliff ? 0.2 : 1.0) * lightcolor1 * blinn1 * blinnAmount
                      ), color.a);
 }

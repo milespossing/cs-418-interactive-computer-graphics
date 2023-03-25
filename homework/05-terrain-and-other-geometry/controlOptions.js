@@ -18,18 +18,22 @@ var controlOptions =
           "type": "checkbox",
           "label": "Shiny",
           "default": "true"
-        }
-      }
-
-    },
-    "sphere": {
-      "label": "Basic: Sphere",
-      "options": {
-        "numHorizontal": {
+        },
+        "lightPosX": {
           "type": "number",
-          "default": 50,
-          "label": "Number of Rings"
-        }
+          "label": "Light Position X",
+          "default": 1
+        },
+        "lightPosY": {
+          "type": "number",
+          "label": "Light Position Y",
+          "default": 1
+        },
+        "lightPosZ": {
+          "type": "number",
+          "label": "Light Position Z",
+          "default": 1
+        },
       }
     },
     "terrain": {

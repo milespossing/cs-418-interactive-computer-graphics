@@ -96,6 +96,9 @@ const getMaxMin = (acc, [head, ...tail]) => {
   return getMaxMin(acc, tail);
 }
 
+const curriedAdd = R.curry((a,b) => add(a,b));
+const curriedMult = R.curry((a,b) => m4mul(a,b));
+
 const draw = (gl, program) => (perspective) => ([geom, options]) => {
   gl.useProgram(program);
   console.log(options);
@@ -114,18 +117,21 @@ const draw = (gl, program) => (perspective) => ([geom, options]) => {
   const blinnAmountLoc = gl.getUniformLocation(program, 'blinnAmount');
   const { max, min } = getMaxMin({max:0, min:0}, geom.attributes.position);
   const render = (ms) => {
-    console.log('rendering');
     gl.clearColor(...IlliniBlue); // f(...[1,2,3]) means f(1,2,3)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const v = m4view([math.cos(ms / 1000),1,math.sin(ms / 1000)], [0,0,0], [0,1,0]);
+    const toView = curriedMult(v);
     const geometry = prepareGeometry(gl, program)(geom);
     const m = options.model ?? IdentityMatrix;
     const [color1, color2, color3] = options.colors ?? [IlliniOrange, IlliniOrange, IlliniOrange];
-    const cliffColor = options.cliffColor ?? Black;
-    const lightDir = options.lightDir ?? normalize([1,1,1]);
+    const cliffColor = options.cliffColor ?? color1;
+    const lightDir = normalize(options.lightDir ?? [1,1,1]);
+
     const lightColor = options.lightColor ?? [1,1,1];
-    const mv = m4mul(v, m);
-    const halfway = normalize(add(lightDir, [0,0,1]));
+    const mv = toView(m);
+    const getHalfway = R.compose(normalize, curriedAdd([0,0,1]));
+    const halfway = getHalfway(lightDir);
+
     gl.uniform1f(blinnAmountLoc, options.shiny ? 1 : 0);
     gl.uniform1f(maxHeightLoc, max);
     gl.uniform1f(minHeightLoc, min);
