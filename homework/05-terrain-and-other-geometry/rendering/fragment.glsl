@@ -30,7 +30,7 @@ void main() {
     vec4 color = isCliff ? cliffColor : pow(max(0.0, cos(h_norm)),2.0) * color1 + pow(max(0.0, sin(h_norm)),2.0) * color2 + pow(max(0.0,-cos(h_norm)),2.0) * color3;
     vec3 n = normalize(fnormal);
     float lambert1 = max(dot(lightdir1.xyz, n), 0.0);
-    float blinn1 = pow(max(dot(halfway, n), 0.0), 100.0);
+    float blinn1 = pow(max(dot(halfway, n), 0.0), 50.0);
     fragColor = vec4(color.rgb * (
                      lightcolor1 * lambert1 +
                      (isCliff ? cliffBlinnAmount : 1.0) * lightcolor1 * blinn1 * blinnAmount

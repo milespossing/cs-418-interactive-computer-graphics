@@ -49,6 +49,21 @@ var controlOptions =
           "default":10,
           "label":"Fractures"
         },
+        "lightDirX": {
+          "type": "number",
+          "default":1,
+          "label": "Light Direction X",
+        },
+        "lightDirY": {
+          "type": "number",
+          "default":1,
+          "label": "Light Direction Y",
+        },
+        "lightDirZ": {
+          "type": "number",
+          "default":1,
+          "label": "Light Direction Z",
+        },
         "shiny": {
           "type": "checkbox",
           "label": "Optional: Shiny",
