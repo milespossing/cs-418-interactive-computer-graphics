@@ -15,6 +15,7 @@ uniform mat4 m;
 void main() {
   mat4 mv = v * m;
   gl_Position = p * mv * position;
+  // want lightdir in view, but not model coords
   lightdir1 = p * v * vec4(lightdir, 1);
   mnormal = mat3(m) * normal;
   fnormal = mat3(mv) * normal;

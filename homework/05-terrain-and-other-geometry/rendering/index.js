@@ -105,6 +105,7 @@ const draw = (gl, program) => (perspective) => ([geom, options]) => {
   const maxHeightLoc = gl.getUniformLocation(program, 'maxHeight');
   const minHeightLoc = gl.getUniformLocation(program, 'minHeight');
   const cliffColorLoc = gl.getUniformLocation(program, 'cliffColor');
+  const cliffBlinnLoc = gl.getUniformLocation(program, 'cliffBlinnAmount');
   const pLoc = gl.getUniformLocation(program, 'p');
   const vLoc = gl.getUniformLocation(program, 'v');
   const mLoc = gl.getUniformLocation(program, 'm');
@@ -124,6 +125,8 @@ const draw = (gl, program) => (perspective) => ([geom, options]) => {
     const geometry = prepareGeometry(gl, program)(geom);
     const m = options.model ?? IdentityMatrix;
     const [color1, color2, color3] = options.colors ?? [IlliniOrange, IlliniOrange, IlliniOrange];
+    const cliffBlinn = options.cliffBlinn ?? 1;
+    console.log(cliffBlinn);
     const cliffColor = options.cliffColor ?? color1;
     const lightDir = normalize(options.lightDir ?? [1,1,1]);
 
@@ -135,6 +138,7 @@ const draw = (gl, program) => (perspective) => ([geom, options]) => {
     gl.uniform1f(blinnAmountLoc, options.shiny ? 1 : 0);
     gl.uniform1f(maxHeightLoc, max);
     gl.uniform1f(minHeightLoc, min);
+    gl.uniform1f(cliffBlinnLoc, cliffBlinn);
     gl.uniform3fv(halfwayLoc, halfway);
     gl.uniform3fv(lightLoc, lightDir);
     gl.uniform4fv(color1Loc, color1);

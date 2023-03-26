@@ -60,8 +60,9 @@ const terrain = ({ resolution, slices, shiny }) => {
     Green,
   ];
   const cliffColor = new Float32Array([0.12, 0.08, 0.05, 1]);
-  const lightDir = normalize([1, 1, 1]);
-  return Promise.resolve([geometry, { shiny, colors, cliffColor, model: m4trans(-0.5, 0, -0.5), color: IlliniOrange }]);
+  const lightDir = normalize([0, 1, -2]);
+  const cliffBlinn = 0.2;
+  return Promise.resolve([geometry, { shiny, colors, cliffColor, cliffBlinn, model: m4trans(-0.5, 0, -0.5), color: IlliniOrange }]);
 };
 
 export default terrain;
