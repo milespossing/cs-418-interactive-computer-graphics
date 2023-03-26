@@ -14,25 +14,25 @@ var controlOptions =
             "monkey.json": "Monkey"
           }
         },
-        "shiny": {
-          "type": "checkbox",
-          "label": "Shiny",
-          "default": "true"
-        },
         "lightPosX": {
           "type": "number",
           "label": "Light Position X",
-          "default": 1
+          "default": 1,
         },
         "lightPosY": {
           "type": "number",
           "label": "Light Position Y",
-          "default": 1
+          "default": 1,
         },
         "lightPosZ": {
           "type": "number",
           "label": "Light Position Z",
-          "default": 1
+          "default": 1,
+        },
+        "shiny": {
+          "type": "checkbox",
+          "label": "Shiny",
+          "default": "true"
         },
       }
     },
@@ -48,21 +48,6 @@ var controlOptions =
           "type":"number",
           "default":10,
           "label":"Fractures"
-        },
-        "lightDirX": {
-          "type": "number",
-          "default":1,
-          "label": "Light Direction X",
-        },
-        "lightDirY": {
-          "type": "number",
-          "default":1,
-          "label": "Light Direction Y",
-        },
-        "lightDirZ": {
-          "type": "number",
-          "default":1,
-          "label": "Light Direction Z",
         },
         "shiny": {
           "type": "checkbox",

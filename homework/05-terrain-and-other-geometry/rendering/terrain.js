@@ -51,7 +51,7 @@ const postProcess = c => grid => {
     : grid;
 }
 
-const terrain = ({ resolution, slices, shiny, lightDirX, lightDirY, lightDirZ }) => {
+const terrain = ({ resolution, slices, shiny }) => {
   const grid = sliceN(slices, resolution, math.zeros(resolution, resolution), 0);
   const geometry = tesilate(postProcess(0.3)(grid), resolution);
   const colors = [
@@ -60,9 +60,17 @@ const terrain = ({ resolution, slices, shiny, lightDirX, lightDirY, lightDirZ })
     Green,
   ];
   const cliffColor = new Float32Array([0.12, 0.08, 0.05, 1]);
-  const lightDir = normalize([lightDirX, lightDirY, lightDirZ]);
+  const lightDir = [0, 1, 1];
   const cliffBlinn = 0.2;
-  return Promise.resolve([geometry, { shiny, colors, cliffColor, cliffBlinn, model: m4trans(-0.5, 0, -0.5), color: IlliniOrange }]);
+  return Promise.resolve([geometry, {
+    shiny,
+    colors,
+    lightDir,
+    cliffColor,
+    cliffBlinn,
+    model: m4trans(-0.5, 0, -0.5),
+    color: IlliniOrange
+  }]);
 };
 
 export default terrain;
