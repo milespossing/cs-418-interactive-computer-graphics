@@ -8,10 +8,11 @@ Required:
 [] Set up UI for configurability
 
 Optional (55):
-[] Shiny (10)
-[] Height-based color ramp (20) ((30))
-[] Rocky Cliffs (20) ((50))
-[] Torus (15) ((65))
+[x] Shiny (10)
+[x] Height-based color ramp (20) ((30))
+[x] Rocky Cliffs (20) ((50))
+
+[] fix the height in the vertex shader
 
 Because there may or may not be a different geometry for the torus, I
 need some way to selectively set up the geometry. Whatever I do for

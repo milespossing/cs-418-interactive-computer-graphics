@@ -5,7 +5,6 @@ in vec3 normal;
 out vec3 fnormal;
 out vec3 mnormal;
 out vec4 lightdir1;
-out vec4 color;
 out float height;
 uniform vec3 lightdir;
 uniform mat4 p;
@@ -19,5 +18,8 @@ void main() {
   lightdir1 = p * v * vec4(lightdir, 1);
   mnormal = mat3(m) * normal;
   fnormal = mat3(mv) * normal;
-  height = position.y;
+  // need the model coords of the position, not the model view.
+  // in the model view case the height would change as the view
+  // changes
+  height = (m * position).y;
 }
