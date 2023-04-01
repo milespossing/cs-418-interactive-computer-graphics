@@ -1,0 +1,10 @@
+body { margin: 0; border: none; padding: 0; display: flex; }
+.controls {
+    width: min(50%, 20em); padding: 1em;
+    flex: 0 0 min(50%, 20em);
+}
+.controls label { display: block; }
+.display {
+    flex-grow: 1; height: 100vh;
+    line-height: 0rem;
+}

@@ -1,0 +1,17 @@
+Need basic game state frame loop:
+
+1. Initialize game state
+2. Begin game loop:
+  1. Check user inputs
+  2. increment state s with inputs into s'
+  3. Render gamestate s'
+
+
+Game state
+
+- Player location
+- Player View [20]
+- Movement mode (vehicular movement) [15]
+
+- Need some kind of nice way to rotate player view in the state transformation
+
