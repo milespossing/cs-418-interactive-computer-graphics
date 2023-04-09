@@ -1,0 +1,7 @@
+Required
+Auto-generate a terrain
+User-controlled camera movement
+Texture mapped terrain (see texture.jpg and photo-credit--the photo was public domain, but I've included the link)
+
+Optional
+Rotating Camera (Also including q and e for rotating in the z-axis) [20]

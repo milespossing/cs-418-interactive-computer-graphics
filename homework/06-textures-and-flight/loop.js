@@ -5,7 +5,7 @@ export const executeLoop = (gl, program, transformState, renderState) => (state)
     cancelAnimationFrame(window.animationFrame);
   const render = (state, last, iteration = 0) => (ms) => {
     const deltaT = last ? ms - last : 0;
-    const nextState = transformState(state, ms, deltaT, window.keysBeingPressed ?? {});
+    const nextState = transformState(state, ms, deltaT, window.keysBeingPressed ?? {}, iteration);
     renderState(nextState, iteration);
     window.animationFrame = requestAnimationFrame(render(nextState, ms, iteration + 1));
   };

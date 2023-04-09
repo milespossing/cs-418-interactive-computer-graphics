@@ -68,6 +68,10 @@ const computeNormals = (geometry) => {
   return normals.map(n => normalize(n));
 }
 
+const computeTexCoords = (geometry) => {
+  return geometry.attributes.position.map((p) => [p[0],p[2]]);
+}
+
 const prepareGeometry = (gl, program) => {
   const supplyData = (key, data, mode = gl.STATIC_DRAW) => {
     let buf = gl.createBuffer();
@@ -83,8 +87,10 @@ const prepareGeometry = (gl, program) => {
   };
 
   return (geometry) => {
-    const normals = computeNormals(geometry);
-    geometry.attributes.normal = normals;
+    const normal = computeNormals(geometry);
+    const aTexCoord = computeTexCoords(geometry);
+
+    geometry.attributes = { ...geometry.attributes, normal, aTexCoord };
     const triangleArray = gl.createVertexArray();
     gl.bindVertexArray(triangleArray);
 

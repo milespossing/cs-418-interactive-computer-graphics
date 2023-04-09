@@ -21,6 +21,7 @@ export const rotationFromHomo = (matrix) => new Float32Array([
   matrix[8], matrix[9], matrix[10],
 ]);
 
+
 export const getTrans = (matrix) => new Float32Array([
   matrix[12], matrix[13], matrix[14],
 ]);

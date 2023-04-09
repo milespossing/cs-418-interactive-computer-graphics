@@ -47,13 +47,13 @@ const setup = async () => {
     color2: new Float32Array([1,0,0,1]),
     color3: new Float32Array([0,1,0,1]),
     cliffColor: new Float32Array([0.2, 0.18, 0.1, 1]),
-    lightDir: new Float32Array([0, 1, 1]),
+    lightDir: new Float32Array([0, 1, 0]),
     lightColor: new Float32Array([1,1,1]),
   };
   window.state = initialState;
   window.gl = gl;
   window.program = program;
-  window.createNewLoop = executeLoop(gl, program, incrementState, renderState(gl, program, config));
+  window.createNewLoop = executeLoop(gl, program, incrementState, await renderState(gl, program, config));
 
   fillScreen();
 };
