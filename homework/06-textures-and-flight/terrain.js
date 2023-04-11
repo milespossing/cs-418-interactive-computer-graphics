@@ -36,12 +36,25 @@ const tesilate = (grid, resolution) => {
   return { attributes, triangles };
 };
 
+const terrainToGrid = (terrain, resolution) => {
+  const { position } = terrain.attributes;
+  const step = 1.0/resolution;
+  return (x,z) => {
+    // we need to move up our position by this offset
+    const actualX = math.floor((x + 0.5) * resolution);
+    const actualZ = math.floor((z + 0.5) * resolution);
+    const i = actualX * resolution + actualZ;
+    return position[i][1] + (4 / resolution);
+  };
+};
+
 const sliceN = (n, resolution, grid, i) => {
   if (i >= n) return grid;
   const size = Math.random() * 10;
   return sliceN(n, resolution, performSlice(resolution)(size)(grid), i + 1);
 }
 
+// TODO: This needs work per the last assignment
 const postProcess = c => grid => {
   const max = math.max(grid);
   const min = math.min(grid);
@@ -121,11 +134,14 @@ const getMaxMin = (positions) => positions.reduce((acc, p) => {
 }, { min: 0, max: 0 });
 
 const getScene = (gl, program) => {
-  const generated = buildTerrain(100, 50, false);
-  const terrain = prepareGeometry(gl, program)(generated);
-  const { max, min } = getMaxMin(generated.attributes.position);
+  const resolution = 100;
+  const terrain = buildTerrain(resolution, 50, false);
+  const geometry = prepareGeometry(gl, program)(terrain);
+  const { max, min } = getMaxMin(terrain.attributes.position);
   return {
     terrain,
+    geometry,
+    getTerrainHeight: terrainToGrid(terrain, resolution),
     maxHeight: max,
     minHeight: min,
   };

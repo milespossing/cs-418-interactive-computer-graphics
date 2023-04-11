@@ -44,7 +44,7 @@ const setupImage = async (gl) => {
 
 // TODO: If terrain isn't changing between states we could probably
 // save some cycles here by never changing the buffer?
-export const renderState = async (gl, program, { terrain, ...initials }) => {
+export const renderState = async (gl, program, { geometry, ...initials }) => {
   gl.useProgram(program);
   const pLoc = gl.getUniformLocation(program, 'p');
   // TODO: Need to scale this somehow so when we move we're
@@ -61,7 +61,7 @@ export const renderState = async (gl, program, { terrain, ...initials }) => {
   const imgLoc = gl.getUniformLocation(program, 'texture1');
   const slot = await setupImage(gl);
   const { color1, color2, color3, cliffColor, lightDir, lightColor } = initials;
-  const m = m4trans(0.5,1, 0.5);
+  const m = m4trans(-0.5, 0, -0.5);
   // set universal uniforms (for all frames)
   gl.uniform4fv(color1Loc, color1);
   gl.uniform4fv(color2Loc, color2);
@@ -70,7 +70,7 @@ export const renderState = async (gl, program, { terrain, ...initials }) => {
   gl.uniform3fv(lightLoc, lightDir);
   gl.uniform4fv(cliffColorLoc, cliffColor);
   gl.uniform1i(imgLoc, slot);
-  gl.bindVertexArray(terrain.vao);
+  gl.bindVertexArray(geometry.vao);
   return (state, iteration) => {
     const log = (...inputs) => {
       if (iteration % 500 === 0) console.log(...inputs);
@@ -78,15 +78,13 @@ export const renderState = async (gl, program, { terrain, ...initials }) => {
     // log(state);
     gl.clearColor(...IlliniBlue);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    console.log(state);
     const { transform } = state;
-    console.log(transform);
 
     gl.uniformMatrix4fv(pLoc, false, state.perspective);
     gl.uniformMatrix4fv(vLoc, false, transform);
     gl.uniformMatrix4fv(mLoc, false, m);
     gl.uniformMatrix4fv(mvLoc, false, m4mul(transform,m));
-    gl.drawElements(terrain.mode, terrain.count, terrain.type, 0);
+    gl.drawElements(geometry.mode, geometry.count, geometry.type, 0);
   };
 };
 

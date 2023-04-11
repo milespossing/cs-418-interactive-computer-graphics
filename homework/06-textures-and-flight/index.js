@@ -37,10 +37,11 @@ const setup = async () => {
   gl.enable(gl.BLEND)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
   const program = await compile(gl);
-  const { terrain, maxHeight, minHeight } = getScene(gl, program);
+  const { terrain, getTerrainHeight, geometry, maxHeight, minHeight } = getScene(gl, program);
+  console.log(terrain);
   const initialState = initializeState(gl, program);
   const config = {
-    terrain,
+    geometry,
     maxHeight,
     minHeight,
     color1: new Float32Array([0,0,1,1]),
@@ -53,7 +54,8 @@ const setup = async () => {
   window.state = initialState;
   window.gl = gl;
   window.program = program;
-  window.createNewLoop = executeLoop(gl, program, incrementState, await renderState(gl, program, config));
+  console.log(getTerrainHeight);
+  window.createNewLoop = executeLoop(gl, program, incrementState(getTerrainHeight), await renderState(gl, program, config));
 
   fillScreen();
 };

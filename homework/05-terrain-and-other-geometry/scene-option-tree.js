@@ -79,7 +79,6 @@ window.addEventListener('load', event=> {
             let d = controlOptions[scene].options?.[k]?.['default']
             if (t == 'number') return [k, Number(v)||d||0]
             if (t == 'checkbox') {
-              console.log(k,v);
               return [k, v == 'true']
             }
             return [k,v]

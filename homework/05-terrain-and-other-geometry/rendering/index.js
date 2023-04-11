@@ -122,9 +122,6 @@ const draw = (gl, program) => (perspective) => ([geom, options]) => {
   const cliffBlinn = options.cliffBlinn ?? 1;
   const cliffColor = options.cliffColor ?? color1;
   const lightDir = normalize(options.lightDir ?? [1,1,1]);
-  console.log(lightDir);
-  console.log(options.lightDir);
-  console.log(options.lightDir ?? [1,1,1]);
 
   const lightColor = options.lightColor ?? [1,1,1];
   const getHalfway = R.compose(normalize, curriedAdd([0,0,1]));

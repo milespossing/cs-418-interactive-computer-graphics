@@ -27,9 +27,8 @@ export const getTrans = (matrix) => new Float32Array([
 ]);
 
 export const setTrans = (trans, matrix) => new Float32Array([
-  matrix[0], matrix[1], matrix[2], matrix[3],
-  matrix[4], matrix[5], matrix[6], matrix[7],
-  matrix[8], matrix[9], matrix[10],matrix[11],
-  trans[0],   trans[1],   trans[2],matrix[15],
+  matrix[0], matrix[1],  matrix[2],  matrix[3],
+  matrix[4], matrix[5],  matrix[6],  matrix[7],
+  matrix[8], matrix[9], matrix[10], matrix[11],
+   trans[0],  trans[1],   trans[2], matrix[15],
 ]);
-
