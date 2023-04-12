@@ -1,0 +1,18 @@
+#Required
+png
+sphere
+sun
+color
+overlap
+sRGB
+Rays, not lines
+Shadows
+
+#Optional
+##Geometry
+Plane [5]
+Triangle [15]
+##Lighting
+Multiple suns [5]
+More shadows
+  - Suns [5]

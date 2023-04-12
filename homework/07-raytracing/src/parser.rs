@@ -52,6 +52,9 @@ pub enum FileEntry {
     Sphere { x: f64, y: f64, z: f64, r: f64 },
     Sun { x: f64, y: f64, z: f64 },
     Color { r: f64, g: f64, b: f64 },
+    Plane { a: f64, b: f64, c: f64, d: f64 },
+    Xyz { x: f64, y: f64, z: f64 },
+    Triangle { a: i32, b: i32, c: i32 },
 }
 
 impl FromStr for FileEntry {
@@ -107,7 +110,56 @@ impl FromStr for FileEntry {
                     Err(e) => return Err(e.to_string()),
                 };
                 Ok(FileEntry::Color { r, g, b })
-            }
+            },
+            "plane" => {
+                let a = match parts[1].parse::<f64>() {
+                    Ok(a) => a,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let b = match parts[2].parse::<f64>() {
+                    Ok(b) => b,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let c = match parts[3].parse::<f64>() {
+                    Ok(c) => c,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let d = match parts[4].parse::<f64>() {
+                    Ok(d) => d,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Plane { a, b, c, d })
+            },
+            "xyz" => {
+                let x = match parts[1].parse::<f64>() {
+                    Ok(x) => x,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let y = match parts[2].parse::<f64>() {
+                    Ok(y) => y,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let z = match parts[3].parse::<f64>() {
+                    Ok(z) => z,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Xyz { x, y, z })
+            },
+            "trif" => {
+                let a = match parts[1].parse::<i32>() {
+                    Ok(a) => a,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let b = match parts[2].parse::<i32>() {
+                    Ok(b) => b,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let c = match parts[3].parse::<i32>() {
+                    Ok(c) => c,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Triangle { a, b, c })
+            },
             _ => Err(format!("Unknown file entry: {}", s)),
         }
     }

@@ -1,12 +1,12 @@
 use std::ops::Add;
 use image::{Pixel, Rgba};
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Vector3};
 use uuid::Uuid;
 use crate::lighting_models::LightingModel;
 use crate::models::Material;
 use crate::parser::ProcFile;
 use crate::raytracer::{Ray, RayHit, RayTracer};
-use crate::scene::Scene;
+use crate::scene::{CameraSettings, Scene};
 use crate::utils::vec3_to_rgb;
 
 
@@ -40,10 +40,6 @@ pub struct Renderer<'a> {
 }
 
 struct RendererOptions {
-    eye: Point3<f64>,
-    forward: Vector3<f64>,
-    right: Vector3<f64>,
-    up: Vector3<f64>,
     width: usize,
     height: usize,
     max_depth: usize,
@@ -52,10 +48,6 @@ struct RendererOptions {
 impl RendererOptions {
     fn from_file(file: &ProcFile) -> Result<Self, String> {
         Ok(RendererOptions {
-            eye: Point3::new(0.0, 0.0, 0.0),
-            forward: Vector3::new(0.0, 0.0, -1.0),
-            right: Vector3::new(1.0, 0.0, 0.0),
-            up: Vector3::new(0.0, 1.0, 0.0),
             width: file.header.width as usize,
             height: file.header.height as usize,
             max_depth: 1,
@@ -65,7 +57,7 @@ impl RendererOptions {
 
 type Position = (usize, usize);
 
-fn initialize_rays(options: &RendererOptions) -> Vec<(Ray, Position)> {
+fn initialize_rays(options: &RendererOptions, camera: &CameraSettings) -> Vec<(Ray, Position)> {
     let w: f64 = options.width as f64;
     let h: f64 = options.height as f64;
     let mut rays: Vec<(Ray, Position)> = Vec::new();
@@ -74,8 +66,8 @@ fn initialize_rays(options: &RendererOptions) -> Vec<(Ray, Position)> {
         for x in 0..options.width {
             let s_x = (2.0 * x as f64 - w) / w.max(h);
             rays.push((Ray::new(
-                options.eye,
-                options.forward.add(options.right.scale(s_x)).add(options.up.scale(s_y)).normalize(),
+                camera.position,
+                camera.forward.add(camera.right.scale(s_x)).add(camera.up.scale(s_y)).normalize(),
             ), (x, y)));
         }
     }
@@ -122,7 +114,7 @@ impl<'a> Renderer<'a> {
     }
 
     pub fn render_scene(&self) -> Result<RendererOutput, String> {
-        let rays = initialize_rays(&self.options);
+        let rays = initialize_rays(&self.options, &self.scene.camera_settings);
         let mut output = RendererOutput::new(self.options.width, self.options.height);
 
         for (ray, (x,y)) in rays.iter() {

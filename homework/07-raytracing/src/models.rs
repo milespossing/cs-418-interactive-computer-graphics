@@ -4,6 +4,8 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy)]
 pub enum ObjPrimative {
     Sphere { xyz: Point3<f64>, r: f64 },
+    Plane { n: Vector3<f64>, p: Point3<f64> },
+    Triangle { vertices: [Point3<f64>; 3], n: Vector3<f64>, e1: Vector3<f64>, e2: Vector3<f64> },
 }
 
 #[derive(Debug, Clone, Copy)]
