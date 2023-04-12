@@ -5,6 +5,7 @@ mod renderer;
 mod rasterize;
 mod models;
 mod lighting_models;
+mod utils;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -32,7 +33,8 @@ fn main() {
     let file_name = get_as_path(&args, 1).unwrap(); //args[1].to_owned();
     let output_path = get_as_path(&args, 2).unwrap_or(Path::new("./").to_path_buf());//String::from("."));
     let file: ProcFile = parse_file(file_name).unwrap();
-    let renderer = Renderer::from_file(&file).unwrap();
+    let scene = scene::Scene::from_file(&file).unwrap();
+    let renderer = Renderer::from_file(&file, &scene).unwrap();
     let rasterizer = Rasterizer::new(&file);
     let output = renderer.render_scene().unwrap();
     let image = rasterizer.rasterize(&output).unwrap();

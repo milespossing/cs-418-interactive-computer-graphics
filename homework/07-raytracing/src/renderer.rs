@@ -1,22 +1,26 @@
 use std::ops::Add;
+use image::{Pixel, Rgba};
 use nalgebra::{Point3, Vector3};
+use uuid::Uuid;
+use crate::lighting_models::LightingModel;
+use crate::models::Material;
 use crate::parser::ProcFile;
-use crate::raytracer::{Ray, RayTracer};
+use crate::raytracer::{Ray, RayHit, RayTracer};
 use crate::scene::Scene;
+use crate::utils::vec3_to_rgb;
 
-pub type Rgba = [f32; 4];
 
 #[derive(Debug)]
 pub struct RendererOutput {
-    pub pixel_buffer: Vec<Vec<Rgba>>,
+    pub pixel_buffer: Vec<Vec<Rgba<u8>>>,
 }
 
 impl RendererOutput {
     pub fn new(width: usize, height: usize) -> RendererOutput {
-        let default_pixel = [0.0, 0.0, 0.0, 0.0];
-        let mut pixel_buffer: Vec<Vec<Rgba>> = Vec::new();
+        let default_pixel = Rgba([0, 0, 0, 0]);
+        let mut pixel_buffer: Vec<Vec<Rgba<u8>>> = Vec::new();
         for _i in 0..height {
-            let mut row: Vec<Rgba> = Vec::new();
+            let mut row: Vec<Rgba<u8>> = Vec::new();
             for _j in 0..width {
                 row.push(default_pixel);
             }
@@ -28,9 +32,11 @@ impl RendererOutput {
     }
 }
 
-pub struct Renderer {
-    scene: Scene,
+pub struct Renderer<'a> {
+    scene: &'a Scene,
     options: RendererOptions,
+    ray_tracer: RayTracer<'a>,
+    lighting_model: LightingModel<'a>
 }
 
 struct RendererOptions {
@@ -40,6 +46,7 @@ struct RendererOptions {
     up: Vector3<f64>,
     width: usize,
     height: usize,
+    max_depth: usize,
 }
 
 impl RendererOptions {
@@ -51,6 +58,7 @@ impl RendererOptions {
             up: Vector3::new(0.0, 1.0, 0.0),
             width: file.header.width as usize,
             height: file.header.height as usize,
+            max_depth: 1,
         })
     }
 }
@@ -74,23 +82,53 @@ fn initialize_rays(options: &RendererOptions) -> Vec<(Ray, Position)> {
     return rays;
 }
 
-impl Renderer {
-    pub fn from_file(file: &ProcFile) -> Result<Self, String> {
-        let scene = Scene::from_file(file)?;
+impl<'a> Renderer<'a> {
+    pub fn from_file(file: &ProcFile, scene: &'a Scene) -> Result<Self, String> {
         let options = RendererOptions::from_file(file)?;
-        Ok(Self { scene, options })
+        let ray_tracer: RayTracer<'_> = RayTracer::new(&scene);
+        let lighting_model = LightingModel::from_file(&file, scene);
+        Ok(Self { scene, options, ray_tracer, lighting_model })
+    }
+
+    fn get_material(&self, id: Uuid) -> Option<&Material> {
+        match self.scene.objects.iter().find(|&o| o.id == id) {
+            Some(o) => Some(&o.material),
+            None => None
+        }
+    }
+
+    // return the lit value at this position
+    fn light(&self, hit: &RayHit) -> Vector3<f64> {
+        let material = self.get_material(hit.object_id).unwrap();
+        let light = self.lighting_model.light(&hit);
+        material.color.component_mul(&light.scale(material.albedo))
+    }
+
+    fn recast(&self, _hit: &RayHit) -> Vector3<f64> {
+        unimplemented!()
+    }
+
+    fn cast_ray(&self, ray: &Ray, depth: usize) -> Option<Vector3<f64>> {
+        match self.ray_tracer.trace_ray(ray) {
+            Some(hit) => {
+                if depth == self.options.max_depth - 1{
+                    Some(self.light(&hit))
+                } else {
+                    Some(self.recast(&hit))
+                }
+            },
+            None => None,
+        }
     }
 
     pub fn render_scene(&self) -> Result<RendererOutput, String> {
-        let ray_tracer = RayTracer::new(&self.scene.objects);
         let rays = initialize_rays(&self.options);
         let mut output = RendererOutput::new(self.options.width, self.options.height);
-        const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
-        for ray in rays.iter() {
-            match ray_tracer.trace_ray(&ray.0) {
-                Some(_) => {
-                    output.pixel_buffer[ray.1.1][ray.1.0] = BLACK;
+        for (ray, (x,y)) in rays.iter() {
+            match self.cast_ray(ray, 0) {
+                Some(color) => {
+                    output.pixel_buffer[*y][*x] = vec3_to_rgb(&color).to_rgba();
                 },
                 None => {},
             }
