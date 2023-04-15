@@ -4,7 +4,7 @@ use crate::parser::ProcFile;
 use crate::raytracer::{Ray, RayHit, RayTracer};
 use crate::scene::Scene;
 use nalgebra::Vector3;
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 mod lambert;
 
@@ -31,12 +31,21 @@ impl<'a> LightingModel<'a> {
                 LightPrimitive::Directional(d) => {
                     let shadow_ray = Ray::new(hit.position, d);
                     match self.ray_tracer.filter_trace_ray(&shadow_ray, hit.object_id) {
-                        Some(_) => {
-                            None
-                        },
+                        Some(_) => None,
                         None => {
                             let dist = self.lambert.get_distribution(&d, &hit.surface_normal);
                             Some(light.color.scale(dist))
+                        }
+                    }
+                }
+                LightPrimitive::Point(p) => {
+                    let d = p.sub(hit.position);
+                    let shadow_ray = Ray::new(hit.position, d.normalize());
+                    match self.ray_tracer.filter_trace_ray(&shadow_ray, hit.object_id) {
+                        Some(h) if h.distance < d.magnitude() => None,
+                        _ => {
+                            let dist = self.lambert.get_distribution(&d, &hit.surface_normal);
+                            Some(light.color.scale(dist / d.magnitude_squared()))
                         }
                     }
                 }

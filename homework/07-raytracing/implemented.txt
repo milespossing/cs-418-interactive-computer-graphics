@@ -10,9 +10,16 @@ Shadows
 
 #Optional
 ##Geometry
+Handle interiors [10]
 Plane [5]
 Triangle [15]
 ##Lighting
 Multiple suns [5]
-More shadows
-  - Suns [5]
+More shadows [20]
+Bulb [10]
+Negative light [5]
+##Sampling
+Eye [5]
+##Materials
+Shininess [10]
+Bounces [5]

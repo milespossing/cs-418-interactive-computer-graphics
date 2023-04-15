@@ -3,22 +3,36 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ObjPrimative {
-    Sphere { xyz: Point3<f64>, r: f64 },
-    Plane { n: Vector3<f64>, p: Point3<f64> },
-    Triangle { vertices: [Point3<f64>; 3], n: Vector3<f64>, e1: Vector3<f64>, e2: Vector3<f64> },
+    Sphere {
+        xyz: Point3<f64>,
+        r: f64,
+    },
+    Plane {
+        n: Vector3<f64>,
+        p: Point3<f64>,
+    },
+    Triangle {
+        vertices: [Point3<f64>; 3],
+        n: Vector3<f64>,
+        e1: Vector3<f64>,
+        e2: Vector3<f64>,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Material {
     pub color: Vector3<f64>,
     pub albedo: f64,
+    pub shininess: f64,
 }
 
 pub const DEFAULT_COLOR: Vector3<f64> = Vector3::new(1.0, 1.0, 1.0);
 pub const DEFAULT_ALBEDO: f64 = 1.1;
+pub const DEFAULT_SHININESS: f64 = 0.0;
 pub const DEFAULT_MATERIAL: Material = Material {
     color: DEFAULT_COLOR,
     albedo: DEFAULT_ALBEDO,
+    shininess: DEFAULT_SHININESS,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -41,6 +55,7 @@ impl SceneObject {
 #[derive(Debug, Clone, Copy)]
 pub enum LightPrimitive {
     Directional(Vector3<f64>),
+    Point(Point3<f64>),
 }
 
 #[derive(Debug, Clone, Copy)]

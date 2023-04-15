@@ -43,7 +43,12 @@ impl FromStr for FileHeader {
             Err(e) => return Err(e.to_string()),
         };
         let name = parts[3].to_string();
-        Ok(FileHeader { output_type, width, height, name })
+        Ok(FileHeader {
+            output_type,
+            width,
+            height,
+            name,
+        })
     }
 }
 
@@ -55,6 +60,13 @@ pub enum FileEntry {
     Plane { a: f64, b: f64, c: f64, d: f64 },
     Xyz { x: f64, y: f64, z: f64 },
     Triangle { a: i32, b: i32, c: i32 },
+    Bulb { x: f64, y: f64, z: f64 },
+    Eye { x: f64, y: f64, z: f64 },
+    Forward { x: f64, y: f64, z: f64 },
+    Up { x: f64, y: f64, z: f64 },
+    Expose { v: f64 },
+    Shiny { s: f64 },
+    Bounces { b: usize },
 }
 
 impl FromStr for FileEntry {
@@ -80,7 +92,7 @@ impl FromStr for FileEntry {
                     Err(e) => return Err(e.to_string()),
                 };
                 Ok(FileEntry::Sphere { x, y, z, r })
-            },
+            }
             "sun" => {
                 let x = match parts[1].parse::<f64>() {
                     Ok(x) => x,
@@ -94,8 +106,8 @@ impl FromStr for FileEntry {
                     Ok(z) => z,
                     Err(e) => return Err(e.to_string()),
                 };
-                Ok(FileEntry::Sun {x, y, z})
-            },
+                Ok(FileEntry::Sun { x, y, z })
+            }
             "color" => {
                 let r = match parts[1].parse::<f64>() {
                     Ok(r) => r,
@@ -110,7 +122,7 @@ impl FromStr for FileEntry {
                     Err(e) => return Err(e.to_string()),
                 };
                 Ok(FileEntry::Color { r, g, b })
-            },
+            }
             "plane" => {
                 let a = match parts[1].parse::<f64>() {
                     Ok(a) => a,
@@ -129,7 +141,7 @@ impl FromStr for FileEntry {
                     Err(e) => return Err(e.to_string()),
                 };
                 Ok(FileEntry::Plane { a, b, c, d })
-            },
+            }
             "xyz" => {
                 let x = match parts[1].parse::<f64>() {
                     Ok(x) => x,
@@ -144,7 +156,7 @@ impl FromStr for FileEntry {
                     Err(e) => return Err(e.to_string()),
                 };
                 Ok(FileEntry::Xyz { x, y, z })
-            },
+            }
             "trif" => {
                 let a = match parts[1].parse::<i32>() {
                     Ok(a) => a,
@@ -159,7 +171,87 @@ impl FromStr for FileEntry {
                     Err(e) => return Err(e.to_string()),
                 };
                 Ok(FileEntry::Triangle { a, b, c })
-            },
+            }
+            "bulb" => {
+                let x = match parts[1].parse::<f64>() {
+                    Ok(x) => x,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let y = match parts[2].parse::<f64>() {
+                    Ok(y) => y,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let z = match parts[3].parse::<f64>() {
+                    Ok(z) => z,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Bulb { x, y, z })
+            }
+            "eye" => {
+                let x = match parts[1].parse::<f64>() {
+                    Ok(x) => x,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let y = match parts[2].parse::<f64>() {
+                    Ok(y) => y,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let z = match parts[3].parse::<f64>() {
+                    Ok(z) => z,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Eye { x, y, z })
+            }
+            "forward" => {
+                let x = match parts[1].parse::<f64>() {
+                    Ok(x) => x,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let y = match parts[2].parse::<f64>() {
+                    Ok(y) => y,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let z = match parts[3].parse::<f64>() {
+                    Ok(z) => z,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Forward { x, y, z })
+            }
+            "up" => {
+                let x = match parts[1].parse::<f64>() {
+                    Ok(x) => x,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let y = match parts[2].parse::<f64>() {
+                    Ok(y) => y,
+                    Err(e) => return Err(e.to_string()),
+                };
+                let z = match parts[3].parse::<f64>() {
+                    Ok(z) => z,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Up { x, y, z })
+            }
+            "expose" => {
+                let v = match parts[1].parse::<f64>() {
+                    Ok(v) => v,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Expose { v })
+            }
+            "shininess" => {
+                let s = match parts[1].parse::<f64>() {
+                    Ok(s) => s,
+                    Err(e) => return Err(e.to_string()),
+                };
+                Ok(FileEntry::Shiny { s })
+            }
+            "bounces" => {
+                match parts[1].parse::<usize>() {
+                    Ok(b) => Ok(FileEntry::Bounces { b }),
+                    Err(e) => Err(e.to_string()),
+                }
+            }
             _ => Err(format!("Unknown file entry: {}", s)),
         }
     }
@@ -174,11 +266,11 @@ pub struct ProcFile {
 
 pub fn parse_file(path: PathBuf) -> Result<ProcFile, String> {
     let contents = std::fs::read_to_string(path).expect("Failed to read file");
-    let lines: Vec<&str> = contents.splitn(2, "\n\n").filter(|&l| { !l.is_empty() }).collect();
+    let lines: Vec<&str> = contents.split("\n").filter(|&l| !l.is_empty()).collect();
     let header = FileHeader::from_str(lines[0])?;
     let mut entries: Vec<FileEntry> = vec![];
-    for line in lines[1].split("\n").filter(|&l|!l.is_empty()) {
-        entries.push(FileEntry::from_str(line)?);
+    for line in lines.iter().skip(1) {
+        entries.push(FileEntry::from_str(*line)?);
     }
     Ok(ProcFile { header, entries })
 }

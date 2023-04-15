@@ -1,5 +1,5 @@
-use nalgebra::Vector3;
 use crate::utils::clamp;
+use nalgebra::Vector3;
 
 pub struct LambertLighting {}
 

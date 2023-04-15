@@ -29,7 +29,12 @@ pub struct RayTracer<'a> {
     scene: &'a Scene,
 }
 
-fn plane_intersection(ray: &Ray, object: &SceneObject, n: Vector3<f64>, p: Point3<f64>) -> Option<RayHit> {
+fn plane_intersection(
+    ray: &Ray,
+    object: &SceneObject,
+    n: Vector3<f64>,
+    p: Point3<f64>,
+) -> Option<RayHit> {
     let t = p.sub(ray.origin).dot(&n) / ray.direction.dot(&n);
     return if t < 0f64 {
         None
@@ -45,77 +50,87 @@ fn plane_intersection(ray: &Ray, object: &SceneObject, n: Vector3<f64>, p: Point
     };
 }
 
-fn find_intersection(ray: &Ray, object: &SceneObject) -> Option<RayHit> {
-    match object.primitive {
-        ObjPrimative::Sphere { xyz, r } => {
-            // check if the ray starts inside the sphere
-            let vec_to_sphere = xyz.sub(ray.origin);
-            let inside = vec_to_sphere.magnitude_squared() < r.powi(2);
-            let t_c = vec_to_sphere
-                .dot(&ray.direction)
-                .div(ray.direction.magnitude());
-            if !inside && t_c < 0f64 {
-                return None;
+impl<'a> RayTracer<'a> {
+    pub fn new(scene: &'a Scene) -> Self {
+        Self { scene }
+    }
+
+    fn find_intersection(&self, ray: &Ray, object: &SceneObject) -> Option<RayHit> {
+        match object.primitive {
+            ObjPrimative::Sphere { xyz, r } => {
+                // check if the ray starts inside the sphere
+                let vec_to_sphere = xyz.sub(ray.origin);
+                let inside = vec_to_sphere.magnitude_squared() < r.powi(2);
+                let t_c = vec_to_sphere
+                    .dot(&ray.direction)
+                    .div(ray.direction.magnitude());
+                if !inside && t_c < 0f64 {
+                    return None;
+                }
+                let d2 = ray
+                    .origin
+                    .add(ray.direction.scale(t_c))
+                    .sub(xyz)
+                    .magnitude_squared();
+                if !inside && r.powi(2) < d2 {
+                    return None;
+                }
+                let r2 = r.powi(2);
+                let num = (r2 - d2).sqrt();
+                let den = ray.direction.magnitude();
+                let t_offset = num / den;
+                let distance = match inside {
+                    true => t_c + t_offset,
+                    false => t_c - t_offset,
+                };
+                let intersection: Point3<f64> = ray.origin.add(ray.direction.scale(distance));
+                let surface_normal = intersection.sub(xyz).scale(1.0 / r);
+                Some(RayHit {
+                    position: intersection,
+                    direction: ray.direction,
+                    distance,
+                    object_id: object.id,
+                    surface_normal: match inside {
+                        false => surface_normal,
+                        true => -surface_normal,
+                    },
+                })
             }
-            let d2 = ray
-                .origin
-                .add(ray.direction.scale(t_c))
-                .sub(xyz)
-                .magnitude_squared();
-            if !inside && r.powi(2) < d2 {
-                return None;
-            }
-            let r2 = r.powi(2);
-            let num = (r2 - d2).sqrt();
-            let den = ray.direction.magnitude();
-            let t_offset = num / den;
-            let distance = match inside {
-                true => t_c + t_offset,
-                false => t_c - t_offset,
-            };
-            let intersection: Point3<f64> = ray.origin.add(ray.direction.scale(distance));
-            let surface_normal = intersection.sub(xyz).scale(1.0 / r);
-            Some(RayHit {
-                position: intersection,
-                direction: ray.direction,
-                distance,
-                object_id: object.id,
-                surface_normal,
-            })
-        }
-        ObjPrimative::Plane { n, p } => {
-            plane_intersection(ray, object, n, p)
-        },
-        ObjPrimative::Triangle { vertices, n, e1, e2 } => {
-            let intersection = plane_intersection(ray, object, n, vertices[0]);
-            match intersection {
-                None => None,
-                Some(hit) => {
-                    let b1 = e1.dot(&hit.position.sub(vertices[0]));
-                    let b2 = e2.dot(&hit.position.sub(vertices[0]));
-                    let b0 = 1.0 - b1 - b2;
-                    if b0 > 0.0 && b1 > 0.0 && b2 > 0.0 {
-                        Some(hit)
-                    } else {
-                        None
+            ObjPrimative::Plane { n, p } => plane_intersection(ray, object, n, p),
+            ObjPrimative::Triangle {
+                vertices,
+                n,
+                e1,
+                e2,
+            } => {
+                let intersection = plane_intersection(ray, object, n, vertices[0]);
+                match intersection {
+                    None => None,
+                    Some(mut hit) => {
+                        hit.surface_normal = match n {
+                            a if self.scene.camera_settings.forward.dot(&a) > 0.0 => -a,
+                            a => a,
+                        };
+                        let b1 = e1.dot(&hit.position.sub(vertices[0]));
+                        let b2 = e2.dot(&hit.position.sub(vertices[0]));
+                        let b0 = 1.0 - b1 - b2;
+                        if b0 > 0.0 && b1 > 0.0 && b2 > 0.0 {
+                            Some(hit)
+                        } else {
+                            None
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-impl<'a> RayTracer<'a> {
-    pub fn new(scene: &'a Scene) -> Self {
-        Self { scene }
     }
 
     pub fn trace_ray(&self, ray: &Ray) -> Option<RayHit> {
         self.scene
             .objects
             .iter()
-            .map(|o| find_intersection(ray, &o))
-            .filter(|o| o.is_some())
+            .map(|o| self.find_intersection(ray, &o))
+            .filter(|o| match o { Some(d) => d.distance > 0.00001, None => false })
             .map(|o| o.unwrap())
             .min_by(|a, b| a.distance.total_cmp(&b.distance))
     }
@@ -125,7 +140,7 @@ impl<'a> RayTracer<'a> {
             .objects
             .iter()
             .filter(|o| o.id != ignore_object_id)
-            .map(|o| find_intersection(ray, &o))
+            .map(|o| self.find_intersection(ray, &o))
             .filter(|o| o.is_some())
             .map(|o| o.unwrap())
             .min_by(|a, b| a.distance.total_cmp(&b.distance))
