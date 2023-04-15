@@ -74,8 +74,8 @@ const rotation = (keys, velocity, delta) => state => {
   } else if (keys['ArrowRight']) {
     panLeft = 1;
   }
-  const tilter = tiltDown ? m4mulR(m4rotX(deltaT * tiltDown)) : R.identity;
-  const panner = panLeft ? m4mulR(m4rotY(deltaT * panLeft)) : R.identity;
+  const tilter = tiltDown ? m4mulC(m4rotX(deltaT * tiltDown)) : R.identity;
+  const panner = panLeft ? m4mulC(m4rotY(deltaT * panLeft)) : R.identity;
   const inc = R.pipe(panner, tilter);
   return { ...state, transform: inc(state.transform) };
 }
@@ -85,11 +85,11 @@ const setNextState = (state) => { window.state = state };
 const incrementState = (getTerrainHeight) => (state, ms, deltaT, keys, lastKeys, iteration) => {
   const pipeline = R.pipe(
     R.tap(writeState('start', iteration % 500 === 0)),
-    toggleVehicleMode(keys, lastKeys),
+    // toggleVehicleMode(keys, lastKeys),
     rotation(keys, 0.001, deltaT),
     R.tap(writeState('rotated', iteration % 500 === 0)),
     motion(keys, 0.0001, deltaT),
-    constrainVehiclePosition(getTerrainHeight),
+    // constrainVehiclePosition(getTerrainHeight),
     R.tap(writeState('translated', iteration % 500 === 0)),
     R.tap(writeState('state', keys[' '])),
     R.tap(setNextState),
