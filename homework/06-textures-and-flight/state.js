@@ -7,6 +7,7 @@ export const initializeState = (gl, program) => {
   return {
     transform: initialFlightTransform,
     vehicle: false,
+    fog: false,
   };
 }
 
@@ -16,6 +17,14 @@ const toggleVehicleMode = (keys, lastKeys) => state => {
   const nextTransform = state.vehicle ? initialFlightTransform : initialVehicleTransform;
   // set transform and flip vehicle
   return { ...state, vehicle: !state.vehicle, transform: nextTransform };
+}
+
+const toggleFogMode = (keys, lastKeys) => state => {
+  if (!keys['f'] || lastKeys['f']) return state;
+  console.log('activating fog');
+  // if vehicle, then our next will be flight
+  // set transform and flip vehicle
+  return { ...state, fog: !state.fog };
 }
 
 const constrainVehiclePosition = (getTerrainHeight) => state => {
@@ -84,14 +93,15 @@ const setNextState = (state) => { window.state = state };
 
 const incrementState = (getTerrainHeight) => (state, ms, deltaT, keys, lastKeys, iteration) => {
   const pipeline = R.pipe(
-    R.tap(writeState('start', iteration % 500 === 0)),
+    // R.tap(writeState('start', iteration % 500 === 0)),
+    toggleFogMode(keys, lastKeys),
     // toggleVehicleMode(keys, lastKeys),
     rotation(keys, 0.001, deltaT),
-    R.tap(writeState('rotated', iteration % 500 === 0)),
+    // R.tap(writeState('rotated', iteration % 500 === 0)),
     motion(keys, 0.0001, deltaT),
     // constrainVehiclePosition(getTerrainHeight),
-    R.tap(writeState('translated', iteration % 500 === 0)),
-    R.tap(writeState('state', keys[' '])),
+    // R.tap(writeState('translated', iteration % 500 === 0)),
+    // R.tap(writeState('state', keys[' '])),
     R.tap(setNextState),
   );
   return pipeline(state);

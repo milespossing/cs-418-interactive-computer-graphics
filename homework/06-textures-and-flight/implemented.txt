@@ -4,4 +4,5 @@ User-controlled camera movement
 Texture mapped terrain (see texture.jpg and photo-credit--the photo was public domain, but I've included the link)
 
 Optional
-Rotating Camera (Also including q and e for rotating in the z-axis) [20]
+Rotating Camera [20]
+Fog [15]

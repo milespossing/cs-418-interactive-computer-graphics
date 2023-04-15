@@ -9,6 +9,7 @@ out vec3 fnormal;
 out float height;
 out vec4 lightdir1;
 out vec2 vTexCoord;
+out float z;
 uniform vec3 lightdir;
 uniform mat4 p;
 uniform mat4 v;
@@ -22,4 +23,5 @@ void main() {
   fnormal = mat3(mv) * normal;
   vnormal = mat3(v) * normal;
   vTexCoord = aTexCoord;
+  z = gl_Position.z;
 }

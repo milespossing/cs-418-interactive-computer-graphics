@@ -50,6 +50,7 @@ const setup = async () => {
     cliffColor: new Float32Array([0.2, 0.18, 0.1, 1]),
     lightDir: new Float32Array([0, 1, 0]),
     lightColor: new Float32Array([1,1,1]),
+    fogColor: new Float32Array([.8,.8,.8]),
   };
   window.state = initialState;
   window.gl = gl;

@@ -58,14 +58,17 @@ export const renderState = async (gl, program, { geometry, ...initials }) => {
   const color3Loc = gl.getUniformLocation(program, 'color3');
   const cliffColorLoc = gl.getUniformLocation(program, 'cliffColor');
   const lightColorLoc = gl.getUniformLocation(program, 'lightcolor1');
+  const fogColorLoc = gl.getUniformLocation(program, 'fog_color');
+  const useFogLoc = gl.getUniformLocation(program, 'use_fog');
   const imgLoc = gl.getUniformLocation(program, 'texture1');
   const slot = await setupImage(gl);
-  const { color1, color2, color3, cliffColor, lightDir, lightColor } = initials;
+  const { color1, color2, color3, cliffColor, lightDir, lightColor, fogColor } = initials;
   const m = m4trans(-0.5, 0, -0.5);
   // set universal uniforms (for all frames)
   gl.uniform4fv(color1Loc, color1);
   gl.uniform4fv(color2Loc, color2);
   gl.uniform4fv(color3Loc, color3);
+  gl.uniform3fv(fogColorLoc, fogColor);
   gl.uniform3fv(lightColorLoc, lightColor);
   gl.uniform3fv(lightLoc, lightDir);
   gl.uniform4fv(cliffColorLoc, cliffColor);
@@ -76,7 +79,7 @@ export const renderState = async (gl, program, { geometry, ...initials }) => {
       if (iteration % 500 === 0) console.log(...inputs);
     };
     // log(state);
-    gl.clearColor(...IlliniBlue);
+    gl.clearColor(...(state.fog ? [...fogColor, 1] : IlliniBlue));
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const { transform } = state;
 
@@ -84,6 +87,7 @@ export const renderState = async (gl, program, { geometry, ...initials }) => {
     gl.uniformMatrix4fv(vLoc, false, transform);
     gl.uniformMatrix4fv(mLoc, false, m);
     gl.uniformMatrix4fv(mvLoc, false, m4mul(transform,m));
+    gl.uniform1i(useFogLoc, state.fog);
     gl.drawElements(geometry.mode, geometry.count, geometry.type, 0);
   };
 };
