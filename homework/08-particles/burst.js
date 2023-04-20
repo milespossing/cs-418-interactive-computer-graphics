@@ -7,7 +7,7 @@ import {createSphereGeometry} from "./geometries/spheres.js";
 import {distToPlane, rightSideOfPlane} from "./math2.js";
 
 const GRAVITY = [0, -.98, 0];
-const EPSILON = 0.0005;
+const EPSILON = 0.005;
 const VELOCITY_RANGE = 5;
 
 const generateModel = sphere => {
@@ -20,10 +20,10 @@ const generateModel = sphere => {
 }
 
 const generateSphere = () => {
-  const radius = math.random(.05, 0.1);
+  const radius = math.random(.01, 0.1);
   const color = [math.random(), math.random(), math.random(), 1];
   const velocity = R.times(() => math.random(-VELOCITY_RANGE, VELOCITY_RANGE), 3);
-  const position = [math.random(-1, 1), math.random(-1, 1), math.random(-1, 1)];
+  const position = [math.random(-1 + radius, 1 - radius), math.random(0 + radius, 2 - radius), math.random(-1 + radius, 1 - radius)];
   return {
     geometry: 'sphere',
     color,
@@ -34,8 +34,9 @@ const generateSphere = () => {
 }
 
 const buildInitialState = () => ({
-  view: m4view([3, 1, 0], [0, 0, 0], [0, 1, 0]),
+  view: m4view([0, 3, 3], [0, 0, 0], [0, 1, 0]),
   entities: R.times(generateSphere, 50),
+  idleTime: 0,
 });
 
 const buildConfig = () => {
@@ -65,8 +66,8 @@ const updateEntityVelocity = dt => entity =>
       multiplyForce(1 - EPSILON),
       bounceOffWall([-1, 0, 0], [1, 0, 0], entity, 0.8),
       bounceOffWall([1, 0, 0], [-1, 0, 0], entity, 0.8),
-      bounceOffWall([0, -1, 0], [0, 1, 0], entity, 0.8),
-      bounceOffWall([0, 1, 0], [0, -1, 0], entity, 0.8),
+      bounceOffWall([0, 0, 0], [0, 1, 0], entity, 0.8),
+      bounceOffWall([0, 2, 0], [0, -1, 0], entity, 0.8),
       bounceOffWall([0, 0, 1], [0, 0, -1], entity, 0.8),
       bounceOffWall([0, 0, -1], [0, 0, 1], entity, 0.8),
     )
@@ -77,6 +78,20 @@ const updateEntityPosition = dt => (entity) => {
   return {...entity, position: math.add(entity.position, scaled)};
 }
 
+const getMaxVelocity = R.pipe(
+    R.prop('entities'),
+    R.map(e => math.norm(e.velocity)),
+    R.reduce(R.max, 0),
+)
+
+const resetIfIdle = (idleTime, minVelocity, dt) => state => {
+  const maxVelocity = getMaxVelocity(state);
+  console.log(maxVelocity);
+  if (maxVelocity > minVelocity) return state;
+  if (state.idleTime + dt > idleTime) return buildInitialState();
+  return { ...state, idleTime: dt + state.idleTime };
+}
+
 const advanceState = (ms, dt) => R.pipe(
   R.identity,
   R.evolve({
@@ -85,6 +100,7 @@ const advanceState = (ms, dt) => R.pipe(
       R.map(updateEntityVelocity(dt)),
     ),
   }),
+  resetIfIdle(1000, 0.01, dt),
 );
 
 const setup = async () => {
