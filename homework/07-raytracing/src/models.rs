@@ -27,7 +27,7 @@ pub struct Material {
 }
 
 pub const DEFAULT_COLOR: Vector3<f64> = Vector3::new(1.0, 1.0, 1.0);
-pub const DEFAULT_ALBEDO: f64 = 1.1;
+pub const DEFAULT_ALBEDO: f64 = 1.0508;
 pub const DEFAULT_SHININESS: f64 = 0.0;
 pub const DEFAULT_MATERIAL: Material = Material {
     color: DEFAULT_COLOR,

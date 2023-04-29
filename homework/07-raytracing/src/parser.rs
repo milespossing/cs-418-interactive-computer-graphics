@@ -67,6 +67,7 @@ pub enum FileEntry {
     Expose { v: f64 },
     Shiny { s: f64 },
     Bounces { b: usize },
+    Aa { n: usize },
 }
 
 impl FromStr for FileEntry {
@@ -246,12 +247,14 @@ impl FromStr for FileEntry {
                 };
                 Ok(FileEntry::Shiny { s })
             }
-            "bounces" => {
-                match parts[1].parse::<usize>() {
-                    Ok(b) => Ok(FileEntry::Bounces { b }),
-                    Err(e) => Err(e.to_string()),
-                }
-            }
+            "bounces" => match parts[1].parse::<usize>() {
+                Ok(b) => Ok(FileEntry::Bounces { b }),
+                Err(e) => Err(e.to_string()),
+            },
+            "aa" => match parts[1].parse::<usize>() {
+                Ok(n) => Ok(FileEntry::Aa { n }),
+                Err(e) => Err(e.to_string()),
+            },
             _ => Err(format!("Unknown file entry: {}", s)),
         }
     }
@@ -262,6 +265,25 @@ impl FromStr for FileEntry {
 pub struct ProcFile {
     pub header: FileHeader,
     pub entries: Vec<FileEntry>,
+}
+
+impl ProcFile {
+    pub fn get_aa(&self) -> usize {
+        match self.entries.iter().find_map(|e| match e {
+            FileEntry::Aa { n } => Some(*n),
+            _ => None,
+        }) {
+            Some(n) => n,
+            None => 1,
+        }
+    }
+
+    pub fn get_exposure(&self) -> Option<f64> {
+        self.entries.iter().find_map(|e| match e {
+            FileEntry::Expose { v } => Some(*v),
+            _ => None,
+        })
+    }
 }
 
 pub fn parse_file(path: PathBuf) -> Result<ProcFile, String> {

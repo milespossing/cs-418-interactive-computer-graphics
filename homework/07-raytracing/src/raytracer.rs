@@ -130,7 +130,10 @@ impl<'a> RayTracer<'a> {
             .objects
             .iter()
             .map(|o| self.find_intersection(ray, &o))
-            .filter(|o| match o { Some(d) => d.distance > 0.00001, None => false })
+            .filter(|o| match o {
+                Some(d) => d.distance > 0.00001,
+                None => false,
+            })
             .map(|o| o.unwrap())
             .min_by(|a, b| a.distance.total_cmp(&b.distance))
     }

@@ -56,7 +56,6 @@ impl Scene {
         let mut color: Vector3<f64> = DEFAULT_COLOR;
         let mut vertices: Vec<Point3<f64>> = vec![];
 
-
         for entry in &file.entries {
             match entry {
                 // primitives
@@ -120,30 +119,27 @@ impl Scene {
                 FileEntry::Shiny { s } => {
                     material.shininess = *s;
                 }
-                FileEntry::Bounces { b } => {
-
-                }
                 // settings
                 FileEntry::Eye { x, y, z } => {
                     let eye = Point3::new(*x, *y, *z);
                     camera_settings.position = eye;
                 }
-                FileEntry::Forward { x, y, z } => {
-                    panic!("Forward objects are not supported");
-                    let p = camera_settings.up.cross(&camera_settings.forward);
-                    let forward = Vector3::new(*x, *y, *z);
-                    // let
-                    let right = forward.cross(&camera_settings.up);
-                    camera_settings.forward = forward;
-                    camera_settings.right = right;
-                }
+                // FileEntry::Forward { x, y, z } => {
+                //     panic!("Forward objects are not supported");
+                //     let p = camera_settings.up.cross(&camera_settings.forward);
+                //     let forward = Vector3::new(*x, *y, *z);
+                //     // let
+                //     let right = forward.cross(&camera_settings.up);
+                //     camera_settings.forward = forward;
+                //     camera_settings.right = right;
+                // }
                 FileEntry::Up { x, y, z } => {
                     let up = Vector3::new(*x, *y, *z);
                     let right = camera_settings.forward.cross(&up);
                     camera_settings.up = up;
                     camera_settings.right = right;
                 }
-                FileEntry::Expose { v: _ } => {}
+                _ => {}
             };
         }
         Ok(Self {

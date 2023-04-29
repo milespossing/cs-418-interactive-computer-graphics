@@ -12,6 +12,7 @@ use crate::rasterize::Rasterizer;
 use crate::renderer::Renderer;
 use std::env;
 use std::path::{Path, PathBuf};
+use image::ImageFormat;
 
 fn get_argument(args: &Vec<String>, i: usize) -> Option<String> {
     return if args.len() <= i {
@@ -37,9 +38,11 @@ fn main() {
     let renderer = Renderer::from_file(&file, &scene).unwrap();
     let rasterizer = Rasterizer::new(&file);
     let output = renderer.render_scene().unwrap();
-    let image = rasterizer.rasterize(&output).unwrap();
-    image
-        .save(output_path.join(Path::new(&file.header.name)))
-        .unwrap();
-    println!("Done.");
+    let image = rasterizer.rasterize(output).unwrap();
+    let result = image
+        .save_with_format(output_path.join(Path::new(&file.header.name)), ImageFormat::Png);
+    match result {
+        Ok(_) => println!("Done."),
+        Err(e) => println!("Error: {:?}", e),
+    }
 }
