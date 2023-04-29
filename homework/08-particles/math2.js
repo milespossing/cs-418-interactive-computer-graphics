@@ -42,3 +42,11 @@ export const rightSideOfPlane = (p, n, point) => {
   const v = math.subtract(point, p);
   return math.dot(v, n) > 0;
 }
+
+export const homogenize = (v, a=1) => [...v, a];
+export const homogenizeRot3 = (m) => new Float32Array([
+  ...m[0], 0,
+  ...m[1], 0,
+  ...m[2], 0,
+  0, 0, 0, 1,
+])

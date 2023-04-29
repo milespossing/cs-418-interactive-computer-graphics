@@ -20,7 +20,7 @@ export const renderState = async (gl, program, geometries) => {
       const drawEntity = (geometry, modelGenerator) => (entity) => {
         // individual drawing logic here
         const { color } = entity;
-        const model = modelGenerator(entity);
+        const model = modelGenerator(entity, state.view);
         gl.uniform4fv(colorLoc, color);
         gl.uniformMatrix4fv(mLoc, false, model);
         gl.uniformMatrix4fv(mvLoc, false, m4mul(state.view, model));

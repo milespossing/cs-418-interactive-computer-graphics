@@ -1,4 +1,8 @@
 
+const updateFps = (deltaTime) => {
+  document.querySelector('#fps').innerHTML = `${Math.round(1000 / deltaTime)}`;
+}
+
 export const createLoop = (createRenderer, iterateState, initialState) => {
   let currentLoop = undefined;
   return (perspective, config) => {
@@ -8,7 +12,8 @@ export const createLoop = (createRenderer, iterateState, initialState) => {
     const renderer = createRenderer(perspective, config);
     const iterate = (previousState, lastMs) => (ms) => {
       const deltaT = ms - lastMs;
-      const nextState = iterateState(ms, deltaT)(previousState);
+      updateFps(deltaT);
+      const nextState = iterateState(ms, deltaT, { perspective })(previousState);
       renderer(nextState);
       currentLoop = requestAnimationFrame(iterate(nextState, ms));
     }

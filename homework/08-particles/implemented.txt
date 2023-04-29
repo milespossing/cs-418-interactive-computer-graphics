@@ -1,0 +1,13 @@
+# Required
+Invisible bounding box
+50 Spheres
+Physics
+Periodic Reset
+
+# Optional
+FPS Display [5]
+Variable radii [5]
+
+# Boids
+Boids basic [20]
+
