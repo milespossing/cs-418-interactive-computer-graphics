@@ -8,8 +8,6 @@ pub struct AABB {
     pub max: Point3<f64>,
 }
 
-// TODO: Add tests here
-
 impl AABB {
     pub fn new(min: Point3<f64>, max: Point3<f64>) -> Self {
         Self { min, max }
