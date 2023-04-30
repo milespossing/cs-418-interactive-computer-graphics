@@ -134,7 +134,7 @@ impl<'a> Renderer<'a> {
         if depth > self.options.max_depth {
             return None;
         }
-        match self.ray_tracer.trace_ray(ray) {
+        match self.ray_tracer.trace_ray(ray, None) {
             Some(hit) => {
                 let material = self.scene.get_object(hit.object_id).unwrap().material;
                 match material.shininess {

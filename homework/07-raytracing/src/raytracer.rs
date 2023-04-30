@@ -1,8 +1,10 @@
 use crate::models::{ObjPrimative, SceneObject};
-use crate::scene::Scene;
+use crate::scene::{Scene, MAX_OBJECTS, BVHNode};
 use nalgebra::{Point3, Vector3};
 use std::ops::{Add, Div, Sub};
 use uuid::Uuid;
+
+const ENABLE_BVH: bool = true;
 
 pub struct Ray {
     pub origin: Point3<f64>,
@@ -125,27 +127,84 @@ impl<'a> RayTracer<'a> {
         }
     }
 
-    pub fn trace_ray(&self, ray: &Ray) -> Option<RayHit> {
-        self.scene
-            .objects
+    fn find_closest_intersection(&self, ray: &Ray, objects: &Vec<SceneObject>, ignore_object_id: Option<Uuid>) -> Option<RayHit> {
+        objects
             .iter()
             .map(|o| self.find_intersection(ray, &o))
-            .filter(|o| match o {
-                Some(d) => d.distance > 0.00001,
-                None => false,
+            .filter(|o| match (o, ignore_object_id) {
+                (Some(d), Some(uuid)) if uuid == d.object_id => false,
+                (Some(d), _) => d.distance > 0.00001,
+                (None, _) => false,
             })
             .map(|o| o.unwrap())
             .min_by(|a, b| a.distance.total_cmp(&b.distance))
     }
 
-    pub fn filter_trace_ray(&self, ray: &Ray, ignore_object_id: Uuid) -> Option<RayHit> {
-        self.scene
-            .objects
-            .iter()
-            .filter(|o| o.id != ignore_object_id)
-            .map(|o| self.find_intersection(ray, &o))
-            .filter(|o| o.is_some())
-            .map(|o| o.unwrap())
-            .min_by(|a, b| a.distance.total_cmp(&b.distance))
+    fn find_intersection_bvh(&self, node: &BVHNode, ray: &Ray, filter_object: Option<Uuid>) -> Option<RayHit> {
+        if node.is_leaf() {
+            self.find_closest_intersection(ray, &node.bounding_volume.children, filter_object)
+            // node.bounding_volume.children
+            //     .iter()
+            //     .map(|o| self.find_intersection(ray, &o))
+            //     .filter(|o| match o {
+            //         Some(d) => d.distance > 0.00001,
+            //         None => false,
+            //     })
+            //     .map(|o| o.unwrap())
+            //     .min_by(|a, b| a.distance.total_cmp(&b.distance))
+        } else {
+            let mut intersections: Vec<(&BVHNode, f64)> = match &node.children {
+                None => Vec::new(),
+                Some(children) => {
+                    children.iter()
+                        .filter_map(|n| { match n.bounding_volume.aabb.intersect(ray) {
+                            None => None,
+                            Some(d) => Some((n, d)),
+                        }}).collect()//.(|(_, a), (_, b)| a.total_cmp(b));
+                }
+            };
+            intersections.sort_by(|(_, a), (_, b)| a.total_cmp(&b));
+            for intersection in intersections {
+                if let Some(d) = self.find_intersection_bvh( &intersection.0, ray, filter_object) {
+                    return Some(d);
+                }
+            }
+            None
+        }
     }
+
+    pub fn trace_ray(&self, ray: &Ray, ignore_object_id: Option<Uuid>) -> Option<RayHit> {
+        if ENABLE_BVH && self.scene.objects.len() < MAX_OBJECTS {
+            self.find_closest_intersection(ray, &self.scene.objects, ignore_object_id)
+            // self.scene
+            //     .objects
+            //     .iter()
+            //     .map(|o| self.find_intersection(ray, &o))
+            //     .filter(|o| match (o, ignore_object_id) {
+            //         (Some(d), Some(uuid)) if uuid == d.object_id => false,
+            //         (Some(d), _) => d.distance > 0.00001,
+            //         (None, _) => false,
+            //     })
+            //     .map(|o| o.unwrap())
+            //     .min_by(|a, b| a.distance.total_cmp(&b.distance))
+        } else {
+            // TODO: need to add the planes back in here
+            let root_inter = self.scene.bvh.bounding_volume.aabb.intersect(ray);
+            if root_inter.is_some() {
+                return self.find_intersection_bvh(&self.scene.bvh, ray, ignore_object_id);
+            }
+            None
+        }
+    }
+    //
+    // pub fn filter_trace_ray(&self, ray: &Ray, ignore_object_id: Uuid) -> Option<RayHit> {
+    //     self.scene
+    //         .objects
+    //         .iter()
+    //         .filter(|o| o.id != ignore_object_id)
+    //         .map(|o| self.find_intersection(ray, &o))
+    //         .filter(|o| o.is_some())
+    //         .map(|o| o.unwrap())
+    //         .min_by(|a, b| a.distance.total_cmp(&b.distance))
+    // }
 }

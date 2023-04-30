@@ -1,6 +1,6 @@
 use crate::parser::ProcFile;
 use crate::renderer::RendererOutput;
-use crate::utils::{vec4_to_rgb};
+use crate::utils::vec4_to_rgb;
 use image::{ImageBuffer, Rgba};
 use nalgebra::{Vector3, Vector4};
 
@@ -29,7 +29,10 @@ fn get_averaged_color(
             fragments.push(image[y][x]);
         }
     }
-    let (rgb, a): (Vec<Vector3<f64>>, Vec<f64>) = fragments.iter().map(|v| (Vector3::<f64>::from_vec(vec![v[0], v[1], v[2]]), v[3])).unzip();
+    let (rgb, a): (Vec<Vector3<f64>>, Vec<f64>) = fragments
+        .iter()
+        .map(|v| (Vector3::<f64>::from_vec(vec![v[0], v[1], v[2]]), v[3]))
+        .unzip();
     let alpha_sum: f64 = a.iter().sum();
     let rgb_average: Vector3<f64> = rgb.iter().sum::<Vector3<f64>>() / alpha_sum;
     let alpha = alpha_sum / fragments.len() as f64;
@@ -60,8 +63,11 @@ impl Rasterizer {
         &self,
         rendered: RendererOutput,
     ) -> Result<ImageBuffer<Rgba<u8>, Vec<u8>>, String> {
-        let mut image: ImageBuffer<Rgba<u8>, Vec<u8>> =
-            ImageBuffer::from_pixel(self.settings.width, self.settings.height, Rgba::<u8>([0; 4]));
+        let mut image: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_pixel(
+            self.settings.width,
+            self.settings.height,
+            Rgba::<u8>([0; 4]),
+        );
         let buffer = rendered.into_alpha();
         for idy in 0..self.settings.height {
             for idx in 0..self.settings.width {

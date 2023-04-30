@@ -30,7 +30,7 @@ impl<'a> LightingModel<'a> {
             let light_result: Option<Vector3<f64>> = match light.source {
                 LightPrimitive::Directional(d) => {
                     let shadow_ray = Ray::new(hit.position, d);
-                    match self.ray_tracer.filter_trace_ray(&shadow_ray, hit.object_id) {
+                    match self.ray_tracer.trace_ray(&shadow_ray, Some(hit.object_id)) {
                         Some(_) => None,
                         None => {
                             let dist = self.lambert.get_distribution(&d, &hit.surface_normal);
@@ -41,7 +41,7 @@ impl<'a> LightingModel<'a> {
                 LightPrimitive::Point(p) => {
                     let d = p.sub(hit.position);
                     let shadow_ray = Ray::new(hit.position, d.normalize());
-                    match self.ray_tracer.filter_trace_ray(&shadow_ray, hit.object_id) {
+                    match self.ray_tracer.trace_ray(&shadow_ray, Some(hit.object_id)) {
                         Some(h) if h.distance < d.magnitude() => None,
                         _ => {
                             let dist = self.lambert.get_distribution(&d, &hit.surface_normal);

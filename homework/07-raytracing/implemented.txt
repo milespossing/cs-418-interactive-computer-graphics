@@ -13,6 +13,8 @@ Shadows
 Handle interiors [10]
 Plane [5]
 Triangle [15]
+##Acceleration
+Acceleration [30]
 ##Lighting
 Multiple suns [5]
 More shadows [20]

@@ -1,11 +1,150 @@
 use crate::models::{
-    LightPrimitive, LightSourceObject, Material, ObjPrimative, SceneObject, DEFAULT_COLOR,
+    LightPrimitive, LightSourceObject, Material, ObjPrimative, SceneObject, AABB, DEFAULT_COLOR,
     DEFAULT_MATERIAL,
 };
 use crate::parser::{FileEntry, ProcFile};
 use nalgebra::{Point3, Vector3};
 use std::ops::{Div, Sub};
 use uuid::Uuid;
+
+pub const MAX_OBJECTS: usize = 20;
+
+#[derive(Debug, Clone)]
+pub struct BoundingVolume {
+    pub aabb: AABB,
+    pub children: Vec<SceneObject>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BVHNode {
+    pub bounding_volume: BoundingVolume,
+    pub children: Option<Vec<BVHNode>>,
+}
+
+impl BoundingVolume {
+    fn new(aabb: AABB, children: Vec<SceneObject>) -> BoundingVolume {
+        BoundingVolume { aabb, children }
+    }
+}
+
+// creation
+impl BVHNode {
+    fn build(aabb: AABB, objects: Vec<SceneObject>) -> Self {
+        println!("{}", objects.len());
+        let bounding_volume = BoundingVolume::new(aabb, objects.clone());
+        if objects.len() > MAX_OBJECTS {
+            let children: Vec<BVHNode> = aabb
+                .subdivide()
+                .iter()
+                .filter_map(|&v| {
+                    let interior_objects: Vec<SceneObject> = objects
+                        .clone()
+                        .iter()
+                        .filter(|&o| match o.aabb {
+                            Some(o_aabb) => o_aabb.overlaps(&v),
+                            None => true,
+                        })
+                        .map(|&o| o.clone())
+                        .collect();
+                    if interior_objects.len() > 0 {
+                        Some(BVHNode::build(v, interior_objects))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            BVHNode {
+                bounding_volume,
+                children: Some(children),
+            }
+        } else {
+            BVHNode {
+                bounding_volume,
+                children: None,
+            }
+        }
+    }
+
+    pub fn from_objects(objects: Vec<SceneObject>) -> Self {
+        let minx = objects
+            .iter()
+            .filter_map(|o| match o.aabb {
+                Some(aabb) => Some(aabb.0[0].x),
+                None => None,
+            })
+            .fold(f64::INFINITY, |m, x| m.min(x));
+        let miny = objects
+            .iter()
+            .filter_map(|o| match o.aabb {
+                Some(aabb) => Some(aabb.0[0].y),
+                None => None,
+            })
+            .fold(f64::INFINITY, |m, y| m.min(y));
+        let minz = objects
+            .iter()
+            .filter_map(|o| match o.aabb {
+                Some(aabb) => Some(aabb.0[0].z),
+                None => None,
+            })
+            .fold(f64::INFINITY, |m, z| m.min(z));
+        let maxx = objects
+            .iter()
+            .filter_map(|o| match o.aabb {
+                Some(aabb) => Some(aabb.0[1].x),
+                None => None,
+            })
+            .fold(f64::NEG_INFINITY, |m, x| m.max(x));
+        let maxy = objects
+            .iter()
+            .filter_map(|o| match o.aabb {
+                Some(aabb) => Some(aabb.0[1].y),
+                None => None,
+            })
+            .fold(f64::NEG_INFINITY, |m, x| m.max(x));
+        let maxz = objects
+            .iter()
+            .filter_map(|o| match o.aabb {
+                Some(aabb) => Some(aabb.0[1].z),
+                None => None,
+            })
+            .fold(f64::NEG_INFINITY, |m, x| m.max(x));
+        let bounding_box = AABB::new(Point3::new(minx, miny, minz), Point3::new(maxx, maxy, maxz));
+        let bounding_volume = BoundingVolume::new(bounding_box, objects.clone());
+        if objects.len() < MAX_OBJECTS {
+            BVHNode {
+                bounding_volume,
+                children: None,
+            }
+        } else {
+            let children: Vec<Self> = bounding_box
+                .subdivide()
+                .iter()
+                .map(|v| {
+                    let interior_objects: Vec<SceneObject> = objects
+                        .clone()
+                        .iter()
+                        .filter(|&o| match o.aabb {
+                            Some(o_aabb) => v.overlaps(&o_aabb),
+                            None => true,
+                        })
+                        .map(|o| *o)
+                        .collect();
+                    Self::build(*v, interior_objects)
+                })
+                .collect();
+            BVHNode {
+                bounding_volume,
+                children: Some(children),
+            }
+        }
+    }
+}
+
+impl BVHNode {
+    pub fn is_leaf(&self) -> bool {
+        self.children.is_none()
+    }
+}
 
 #[derive(Debug)]
 pub struct CameraSettings {
@@ -27,6 +166,7 @@ pub struct Scene {
     pub camera_settings: CameraSettings,
     pub light_sources: Vec<LightSourceObject>,
     pub objects: Vec<SceneObject>,
+    pub bvh: BVHNode,
 }
 
 fn get_vertex(i: i32, v: &Vec<Point3<f64>>) -> Point3<f64> {
@@ -142,10 +282,12 @@ impl Scene {
                 _ => {}
             };
         }
+        let bvh = BVHNode::from_objects(objects.clone());
         Ok(Self {
             objects,
             light_sources,
             camera_settings,
+            bvh,
         })
     }
 }
