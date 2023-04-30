@@ -4,7 +4,7 @@ use nalgebra::{Point3, Vector3};
 use std::ops::{Add, Div, Sub};
 use uuid::Uuid;
 
-const ENABLE_BVH: bool = true;
+const MIN_RAY_LENGTH: f64 = 0.01;
 
 pub struct Ray {
     pub origin: Point3<f64>,
@@ -133,7 +133,7 @@ impl<'a> RayTracer<'a> {
             .map(|o| self.find_intersection(ray, &o))
             .filter(|o| match (o, ignore_object_id) {
                 (Some(d), Some(uuid)) if uuid == d.object_id => false,
-                (Some(d), _) => d.distance > 0.00001,
+                (Some(d), _) => d.distance > MIN_RAY_LENGTH,
                 (None, _) => false,
             })
             .map(|o| o.unwrap())
@@ -143,15 +143,6 @@ impl<'a> RayTracer<'a> {
     fn find_intersection_bvh(&self, node: &BVHNode, ray: &Ray, filter_object: Option<Uuid>) -> Option<RayHit> {
         if node.is_leaf() {
             self.find_closest_intersection(ray, &node.bounding_volume.children, filter_object)
-            // node.bounding_volume.children
-            //     .iter()
-            //     .map(|o| self.find_intersection(ray, &o))
-            //     .filter(|o| match o {
-            //         Some(d) => d.distance > 0.00001,
-            //         None => false,
-            //     })
-            //     .map(|o| o.unwrap())
-            //     .min_by(|a, b| a.distance.total_cmp(&b.distance))
         } else {
             let mut intersections: Vec<(&BVHNode, f64)> = match &node.children {
                 None => Vec::new(),
@@ -160,7 +151,7 @@ impl<'a> RayTracer<'a> {
                         .filter_map(|n| { match n.bounding_volume.aabb.intersect(ray) {
                             None => None,
                             Some(d) => Some((n, d)),
-                        }}).collect()//.(|(_, a), (_, b)| a.total_cmp(b));
+                        }}).collect()
                 }
             };
             intersections.sort_by(|(_, a), (_, b)| a.total_cmp(&b));
@@ -174,19 +165,8 @@ impl<'a> RayTracer<'a> {
     }
 
     pub fn trace_ray(&self, ray: &Ray, ignore_object_id: Option<Uuid>) -> Option<RayHit> {
-        if ENABLE_BVH && self.scene.objects.len() < MAX_OBJECTS {
+        if self.scene.objects.len() < MAX_OBJECTS {
             self.find_closest_intersection(ray, &self.scene.objects, ignore_object_id)
-            // self.scene
-            //     .objects
-            //     .iter()
-            //     .map(|o| self.find_intersection(ray, &o))
-            //     .filter(|o| match (o, ignore_object_id) {
-            //         (Some(d), Some(uuid)) if uuid == d.object_id => false,
-            //         (Some(d), _) => d.distance > 0.00001,
-            //         (None, _) => false,
-            //     })
-            //     .map(|o| o.unwrap())
-            //     .min_by(|a, b| a.distance.total_cmp(&b.distance))
         } else {
             // TODO: need to add the planes back in here
             let root_inter = self.scene.bvh.bounding_volume.aabb.intersect(ray);
@@ -196,15 +176,4 @@ impl<'a> RayTracer<'a> {
             None
         }
     }
-    //
-    // pub fn filter_trace_ray(&self, ray: &Ray, ignore_object_id: Uuid) -> Option<RayHit> {
-    //     self.scene
-    //         .objects
-    //         .iter()
-    //         .filter(|o| o.id != ignore_object_id)
-    //         .map(|o| self.find_intersection(ray, &o))
-    //         .filter(|o| o.is_some())
-    //         .map(|o| o.unwrap())
-    //         .min_by(|a, b| a.distance.total_cmp(&b.distance))
-    // }
 }

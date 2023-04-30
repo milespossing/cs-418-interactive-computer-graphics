@@ -30,7 +30,6 @@ impl BoundingVolume {
 // creation
 impl BVHNode {
     fn build(aabb: AABB, objects: Vec<SceneObject>) -> Self {
-        println!("{}", objects.len());
         let bounding_volume = BoundingVolume::new(aabb, objects.clone());
         if objects.len() > MAX_OBJECTS {
             let children: Vec<BVHNode> = aabb
