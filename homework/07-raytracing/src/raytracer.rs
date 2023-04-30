@@ -222,7 +222,7 @@ impl<'a> RayTracer<'a> {
                     .iter()
                     .filter(|&n| match ray.intersect_aabb(&n.bounding_volume.aabb) {
                         None => false,
-                        Some(d) => true,
+                        _ => true,
                     })
                     .filter_map(|n| self.find_intersection_bvh(n, ray, filter_object))
                     .min_by(|a, b| a.distance.total_cmp(&b.distance))
@@ -234,12 +234,16 @@ impl<'a> RayTracer<'a> {
         if !self.force_bvh && self.scene.objects.len() < MAX_OBJECTS {
             self.find_closest_intersection(ray, &self.scene.objects, ignore_object_id)
         } else {
-            // TODO: need to add the planes back in here
             let root_inter = ray.intersect_aabb(&self.scene.bvh.bounding_volume.aabb);
             if root_inter.is_some() {
-                return self.find_intersection_bvh(&self.scene.bvh, ray, ignore_object_id);
+                self.find_intersection_bvh(&self.scene.bvh, ray, ignore_object_id)
+            } else {
+                let planes = self.scene.objects.iter().filter_map(|&o| match o.primitive {
+                    ObjPrimative::Plane {.. } => Some(o.clone()),
+                    _ => None,
+                }).collect();
+                self.find_closest_intersection(ray, &planes, ignore_object_id)
             }
-            None
         }
     }
 }
