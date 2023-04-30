@@ -68,42 +68,42 @@ impl BVHNode {
         let minx = objects
             .iter()
             .filter_map(|o| match o.aabb {
-                Some(aabb) => Some(aabb.0[0].x),
+                Some(aabb) => Some(aabb.min.x),
                 None => None,
             })
             .fold(f64::INFINITY, |m, x| m.min(x));
         let miny = objects
             .iter()
             .filter_map(|o| match o.aabb {
-                Some(aabb) => Some(aabb.0[0].y),
+                Some(aabb) => Some(aabb.min.y),
                 None => None,
             })
             .fold(f64::INFINITY, |m, y| m.min(y));
         let minz = objects
             .iter()
             .filter_map(|o| match o.aabb {
-                Some(aabb) => Some(aabb.0[0].z),
+                Some(aabb) => Some(aabb.min.z),
                 None => None,
             })
             .fold(f64::INFINITY, |m, z| m.min(z));
         let maxx = objects
             .iter()
             .filter_map(|o| match o.aabb {
-                Some(aabb) => Some(aabb.0[1].x),
+                Some(aabb) => Some(aabb.max.x),
                 None => None,
             })
             .fold(f64::NEG_INFINITY, |m, x| m.max(x));
         let maxy = objects
             .iter()
             .filter_map(|o| match o.aabb {
-                Some(aabb) => Some(aabb.0[1].y),
+                Some(aabb) => Some(aabb.max.y),
                 None => None,
             })
             .fold(f64::NEG_INFINITY, |m, x| m.max(x));
         let maxz = objects
             .iter()
             .filter_map(|o| match o.aabb {
-                Some(aabb) => Some(aabb.0[1].z),
+                Some(aabb) => Some(aabb.max.z),
                 None => None,
             })
             .fold(f64::NEG_INFINITY, |m, x| m.max(x));
@@ -136,12 +136,6 @@ impl BVHNode {
                 children: Some(children),
             }
         }
-    }
-}
-
-impl BVHNode {
-    pub fn is_leaf(&self) -> bool {
-        self.children.is_none()
     }
 }
 

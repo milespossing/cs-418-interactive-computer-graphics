@@ -1,66 +1,77 @@
 use nalgebra::{Point3, Vector3};
-use std::ops::{Div};
+use std::ops::Div;
 use uuid::Uuid;
-use crate::raytracer::Ray;
 
 #[derive(Copy, Clone, Debug)]
-pub struct AABB(pub [Point3<f64>; 2]);
+pub struct AABB {
+    pub min: Point3<f64>,
+    pub max: Point3<f64>,
+}
 
 // TODO: Add tests here
 
 impl AABB {
     pub fn new(min: Point3<f64>, max: Point3<f64>) -> Self {
-        Self([min, max])
+        Self { min, max }
     }
 
     pub fn overlaps(&self, other: &AABB) -> bool {
-        self.0[0].x < other.0[1].x
-            && self.0[1].x > other.0[0].x
-            && self.0[0].y < other.0[1].y
-            && self.0[1].y > other.0[0].y
-            && self.0[0].z < other.0[1].z
-            && self.0[1].z > other.0[0].z
+        self.min.x < other.max.x
+            && self.max.x > other.min.x
+            && self.min.y < other.max.y
+            && self.max.y > other.min.y
+            && self.min.z < other.max.z
+            && self.max.z > other.min.z
     }
 
     // This function created by chatGPT and modified heavily to save a bit of time and annoying coding
     // turns out that it didn't same me much time. Maybe chatGPT 5 will do better, but I'm not sure.
-    pub fn subdivide(&self) -> [AABB; 8] {
-        let half_vec = (self.0[1] - self.0[0]).div(2.0);
-        let half_outside = self.0[0] + half_vec;
-        let mut aabbs = [AABB([Point3::new(0.0, 0.0, 0.0); 2]); 8];
+    pub fn subdivide(&self) -> Vec<AABB> {
+        let half_vec = (self.max - self.min).div(2.0);
+        let half_outside = self.min + half_vec;
+        let mut aabbs: Vec<AABB> = vec![];
 
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {
                     let scaler = Vector3::<f64>::new(i as f64, j as f64, k as f64);
-                    let min_point = self.0[0] + half_vec.component_mul(&scaler);
+                    let min_point = self.min + half_vec.component_mul(&scaler);
                     let max_point = half_outside + half_vec.component_mul(&scaler);
-                    aabbs[usize::try_from(i * 4 + j * 2 + k).unwrap()] =
-                        AABB([min_point, max_point]);
+                    aabbs.push(AABB::new(min_point, max_point));
                 }
             }
         }
 
         aabbs
     }
+}
 
-    pub fn intersect(&self, ray: &Ray) -> Option<f64> {
-        let mut tmin = f64::NEG_INFINITY;
-        let mut tmax = f64::INFINITY;
-        let invdir = ray.direction.map(|d| 1.0 / d);
+#[cfg(test)]
+mod aabb_tests {
+    use super::*;
 
-        for i in 0..3 {
-            let t0 = (self.0[0][i] - ray.origin[i]) * invdir[i];
-            let t1 = (self.0[1][i] - ray.origin[i]) * invdir[i];
-            tmin = tmin.max(t0.min(t1));
-            tmax = tmax.min(t0.max(t1));
-        }
+    #[test]
+    fn overlaps_with_partially_outside_box() {
+        let a = AABB::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0));
+        let b = AABB::new(Point3::new(-2.0, -2.0, -2.0), Point3::new(0.0, 0.0, 0.0));
+        assert_eq!(true, a.overlaps(&b));
+        assert_eq!(true, b.overlaps(&a));
+    }
 
-        if tmax < tmin {
-            None
-        } else {
-            Some(tmin)
-        }
+    #[test]
+    fn overlaps_with_entirely_inside_box() {
+        let a = AABB::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0));
+        let b = AABB::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.5, 0.5, 0.5));
+        assert_eq!(true, a.overlaps(&b));
+        assert_eq!(true, b.overlaps(&a));
+    }
+
+    #[test]
+    fn does_not_overlap_with_entirely_outside_box() {
+        let a = AABB::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0));
+        let b = AABB::new(Point3::new(2.0, 2.0, 2.0), Point3::new(3.0, 3.0, 3.0));
+        assert_eq!(false, a.overlaps(&b));
+        assert_eq!(false, b.overlaps(&a));
     }
 }
 
