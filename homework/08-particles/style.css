@@ -21,3 +21,9 @@ body {
     height: 100vh;
     line-height: 0;
 }
+
+.container {
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+}
