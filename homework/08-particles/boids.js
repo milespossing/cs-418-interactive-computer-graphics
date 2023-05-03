@@ -9,7 +9,7 @@ import {homogenize, homogenizeRot3} from "./math2.js";
 
 const BOID_SIZE = 0.03;
 const BOID_BOUNCE_RADIUS = BOID_SIZE;
-const BOID_COUNT = 30;
+const BOID_COUNT = 50;
 
 const randomOnRange = (min, max) => () => math.random(min, max);
 
