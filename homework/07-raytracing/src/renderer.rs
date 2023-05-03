@@ -111,7 +111,7 @@ impl<'a> Renderer<'a> {
     fn light(&self, hit: &RayHit) -> Vector3<f64> {
         let material = self.scene.get_object(hit.object_id).unwrap().material;
         let light = self.lighting_model.light(&hit);
-        material.color.component_mul(&light.scale(material.albedo))
+        material.color.component_mul(&light)
     }
 
     fn get_recast_ray(&self, hit: &RayHit, depth: usize) -> Vector3<f64> {
